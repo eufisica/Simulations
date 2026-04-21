@@ -1,0 +1,292 @@
+
+<h2 class="sr-only">Simulação 3D interativa de ondas estacionárias numa superfície bidimensional, com controlos de frequência, modo e câmara orbital.</h2>
+
+<style>
+  body { margin: 0; }
+  #c3d { display: block; width: 100%; height: 420px; border-radius: 10px; cursor: grab; }
+  #c3d:active { cursor: grabbing; }
+  .ctrl-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .ctrl { display: flex; flex-direction: column; gap: 3px; }
+  .ctrl label { font-size: 12px; color: var(--color-text-secondary); }
+  .ctrl-row { display: flex; align-items: center; gap: 8px; }
+  .ctrl-row input[type=range] { flex: 1; }
+  .cv { font-size: 12px; font-weight: 500; min-width: 44px; text-align: right; color: var(--color-text-primary); }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .mode-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mbtn { font-size: 12px; padding: 4px 12px; cursor: pointer; border: 0.5px solid var(--color-border-secondary); border-radius: 8px; background: var(--color-background-primary); color: var(--color-text-secondary); }
+  .mbtn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); font-weight: 500; }
+  .info-row { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .inf { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--color-text-secondary); }
+  .inf strong { color: var(--color-text-primary); font-weight: 500; }
+</style>
+
+<div style="padding:1rem 0">
+  <div class="mode-row">
+    <button class="mbtn active" id="m-2d">Membrana 2D</button>
+    <button class="mbtn" id="m-1d">Corda 1D</button>
+    <button class="mbtn" id="m-circular">Onda circular</button>
+    <button class="mbtn" id="m-interferencia">Interferência</button>
+  </div>
+
+  <canvas id="c3d"></canvas>
+
+  <div class="ctrl-panel">
+    <div class="ctrl">
+      <label>Frequência (Hz)</label>
+      <div class="ctrl-row"><input type="range" id="s-freq" min="0.2" max="5" step="0.1" value="1.5"><span class="cv" id="v-freq">1.5</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Amplitude</label>
+      <div class="ctrl-row"><input type="range" id="s-amp" min="0.05" max="1.5" step="0.05" value="0.6"><span class="cv" id="v-amp">0.60</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Modo n (X)</label>
+      <div class="ctrl-row"><input type="range" id="s-nx" min="1" max="6" step="1" value="1"><span class="cv" id="v-nx">1</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Modo m (Y)</label>
+      <div class="ctrl-row"><input type="range" id="s-ny" min="1" max="6" step="1" value="1"><span class="cv" id="v-ny">1</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Amortecimento</label>
+      <div class="ctrl-row"><input type="range" id="s-damp" min="0" max="0.9" step="0.05" value="0"><span class="cv" id="v-damp">0.00</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Velocidade câmara</label>
+      <div class="ctrl-row"><input type="range" id="s-speed" min="0" max="2" step="0.1" value="0.3"><span class="cv" id="v-speed">0.30</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button id="btn-play">Pausar</button>
+    <button id="btn-reset">Reiniciar</button>
+    <button id="btn-wire">Grade: ligada</button>
+    <button id="btn-color">Cor: gradiente</button>
+  </div>
+
+  <div class="info-row">
+    <div class="inf">λ = <strong id="i-lam">—</strong></div>
+    <div class="inf">v = <strong id="i-v">—</strong></div>
+    <div class="inf">nós: <strong id="i-nos">—</strong></div>
+    <div class="inf">ventres: <strong id="i-vent">—</strong></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas = document.getElementById('c3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(devicePixelRatio);
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(4, 3.5, 4);
+camera.lookAt(0, 0, 0);
+
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+renderer.setClearColor(dark ? 0x111111 : 0xf5f4f0, 1);
+
+const SEGS = 80;
+const geo = new THREE.PlaneGeometry(4, 4, SEGS, SEGS);
+geo.rotateX(-Math.PI / 2);
+
+const colArray = new Float32Array((SEGS + 1) * (SEGS + 1) * 3);
+geo.setAttribute('color', new THREE.BufferAttribute(colArray, 3));
+
+let useWire = true;
+let useGradient = true;
+
+const matSolid = new THREE.MeshPhongMaterial({
+  vertexColors: true, side: THREE.DoubleSide,
+  shininess: 60, specular: new THREE.Color(0.3, 0.3, 0.3)
+});
+const matWire = new THREE.MeshBasicMaterial({
+  color: dark ? 0x4488cc : 0x2255aa, wireframe: true, opacity: 0.35, transparent: true
+});
+
+const mesh = new THREE.Mesh(geo, matSolid);
+scene.add(mesh);
+const wireMesh = new THREE.Mesh(geo, matWire);
+scene.add(wireMesh);
+
+const ambLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.set(3, 6, 4);
+scene.add(dirLight);
+const dirLight2 = new THREE.DirectionalLight(dark ? 0x3355ff : 0xffeecc, 0.4);
+dirLight2.position.set(-3, 2, -2);
+scene.add(dirLight2);
+
+const axesHelper = new THREE.AxesHelper(2.5);
+scene.add(axesHelper);
+
+let paused = false, t = 0, camAutoSpeed = 0.3;
+let mode = '2d';
+
+function gp(s) { return parseFloat(document.getElementById('s-' + s).value); }
+
+function waveHeight(x, z, time) {
+  const f = gp('freq'), A = gp('amp'), nx = gp('nx'), ny = gp('ny'), d = gp('damp');
+  const L = 2;
+  const omega = 2 * Math.PI * f;
+  const kx = nx * Math.PI / L;
+  const kz = ny * Math.PI / L;
+  const dampFac = Math.exp(-d * time * 0.5);
+
+  if (mode === '2d') {
+    return A * Math.sin(kx * (x + L)) * Math.sin(kz * (z + L)) * Math.cos(omega * time) * dampFac;
+  } else if (mode === '1d') {
+    return A * Math.sin(kx * (x + L)) * Math.cos(omega * time) * dampFac * 0.8;
+  } else if (mode === 'circular') {
+    const r = Math.sqrt(x * x + z * z);
+    const kr = nx * Math.PI / (L * Math.SQRT2);
+    return A * Math.sin(kr * r + 0.01) / (kr * r + 0.5) * Math.cos(omega * time) * dampFac * 2;
+  } else {
+    const k = kx;
+    const w1 = A * 0.5 * Math.sin(k * x - omega * time) * dampFac;
+    const w2 = A * 0.5 * Math.sin(k * z - omega * time * 1.1) * dampFac;
+    return w1 + w2;
+  }
+}
+
+function lerpColor(t) {
+  const lo = dark
+    ? [[0.05, 0.15, 0.5], [0.1, 0.5, 0.8], [0.2, 0.8, 0.6]]
+    : [[0.1, 0.3, 0.8], [0.1, 0.8, 0.5], [0.9, 0.3, 0.1]];
+  const seg = t * (lo.length - 1);
+  const i = Math.min(Math.floor(seg), lo.length - 2);
+  const f = seg - i;
+  return [
+    lo[i][0] + (lo[i+1][0] - lo[i][0]) * f,
+    lo[i][1] + (lo[i+1][1] - lo[i][1]) * f,
+    lo[i][2] + (lo[i+1][2] - lo[i][2]) * f
+  ];
+}
+
+function updateMesh() {
+  const pos = geo.attributes.position;
+  const col = geo.attributes.color;
+  const A = gp('amp');
+  let minY = Infinity, maxY = -Infinity;
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    const y = waveHeight(x, z, t);
+    pos.setY(i, y);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+
+  const range = maxY - minY || 0.001;
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    const nrm = (y - minY) / range;
+    if (useGradient) {
+      const [r, g, b] = lerpColor(nrm);
+      col.setXYZ(i, r, g, b);
+    } else {
+      const v = dark ? 0.55 : 0.45;
+      col.setXYZ(i, v, v, v);
+    }
+  }
+
+  pos.needsUpdate = true;
+  col.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+function updateInfo() {
+  const f = gp('freq'), nx = gp('nx');
+  const L = 2, v = 2.0;
+  const lambda = (2 * L) / nx;
+  document.getElementById('i-lam').textContent = lambda.toFixed(2) + ' m';
+  document.getElementById('i-v').textContent = (f * lambda).toFixed(2) + ' m/s';
+  document.getElementById('i-nos').textContent = (nx + 1) + ' × ' + (parseInt(gp('ny')) + 1);
+  document.getElementById('i-vent').textContent = nx + ' × ' + parseInt(gp('ny'));
+}
+
+let camTheta = Math.PI / 4, camPhi = 0.7, camR = 6.5;
+let dragging = false, lastX = 0, lastY = 0;
+
+canvas.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+canvas.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  camPhi -= dx * 0.005;
+  camTheta = Math.max(0.1, Math.min(Math.PI / 2.2, camTheta + dy * 0.005));
+  lastX = e.clientX; lastY = e.clientY;
+});
+canvas.addEventListener('mouseup', () => dragging = false);
+canvas.addEventListener('mouseleave', () => dragging = false);
+canvas.addEventListener('wheel', e => { camR = Math.max(2, Math.min(12, camR + e.deltaY * 0.01)); });
+
+canvas.addEventListener('touchstart', e => { dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY;
+  camPhi -= dx * 0.005;
+  camTheta = Math.max(0.1, Math.min(Math.PI / 2.2, camTheta + dy * 0.005));
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+}, { passive: false });
+canvas.addEventListener('touchend', () => dragging = false);
+
+function animate() {
+  requestAnimationFrame(animate);
+  resize();
+  if (!paused) {
+    t += 0.016;
+    if (!dragging) camPhi += camAutoSpeed * 0.008;
+  }
+  camera.position.set(
+    camR * Math.sin(camTheta) * Math.sin(camPhi),
+    camR * Math.cos(camTheta),
+    camR * Math.sin(camTheta) * Math.cos(camPhi)
+  );
+  camera.lookAt(0, 0, 0);
+  updateMesh();
+  updateInfo();
+  renderer.render(scene, camera);
+}
+
+['freq','amp','nx','ny','damp','speed'].forEach(id => {
+  document.getElementById('s-' + id).addEventListener('input', function() {
+    const v = parseFloat(this.value);
+    document.getElementById('v-' + id).textContent = v.toFixed(id === 'nx' || id === 'ny' ? 0 : 2);
+    if (id === 'speed') camAutoSpeed = v;
+  });
+});
+
+document.getElementById('btn-play').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? 'Continuar' : 'Pausar';
+});
+document.getElementById('btn-reset').addEventListener('click', () => { t = 0; });
+document.getElementById('btn-wire').addEventListener('click', function() {
+  useWire = !useWire;
+  wireMesh.visible = useWire;
+  this.textContent = 'Grade: ' + (useWire ? 'ligada' : 'desligada');
+});
+document.getElementById('btn-color').addEventListener('click', function() {
+  useGradient = !useGradient;
+  this.textContent = 'Cor: ' + (useGradient ? 'gradiente' : 'uniforme');
+});
+
+['m-2d','m-1d','m-circular','m-interferencia'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function() {
+    document.querySelectorAll('.mbtn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    mode = id.replace('m-','');
+    t = 0;
+  });
+});
+
+animate();
+</script>

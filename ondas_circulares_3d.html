@@ -1,0 +1,290 @@
+
+<h2 class="sr-only">Simulação 3D de ondas circulares numa superfície de água, com múltiplas fontes, controlos de frequência, amplitude e câmara orbital interativa. José Gonçalves</h2>
+
+<style>
+  #cv { display: block; width: 100%; height: 460px; border-radius: 10px; cursor: grab; }
+  #cv:active { cursor: grabbing; }
+  .cp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .cl { display: flex; flex-direction: column; gap: 3px; }
+  .cl label { font-size: 12px; color: var(--color-text-secondary); }
+  .cr { display: flex; align-items: center; gap: 8px; }
+  .cr input[type=range] { flex: 1; }
+  .cv2 { font-size: 12px; font-weight: 500; min-width: 44px; text-align: right; color: var(--color-text-primary); }
+  .br { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .mr { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mb { font-size: 12px; padding: 4px 12px; cursor: pointer; border: 0.5px solid var(--color-border-secondary); border-radius: 8px; background: var(--color-background-primary); color: var(--color-text-secondary); }
+  .mb.on { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); font-weight: 500; }
+</style>
+
+<div style="padding:1rem 0">
+  <div class="mr">
+    <button class="mb on" id="m1">1 fonte</button>
+    <button class="mb" id="m2">2 fontes</button>
+    <button class="mb" id="m3">3 fontes</button>
+    <button class="mb" id="m4">4 fontes</button>
+    <button class="mb" id="mring">Anel</button>
+  </div>
+
+  <canvas id="cv"></canvas>
+
+  <div class="cp">
+    <div class="cl">
+      <label>Frequência (Hz)</label>
+      <div class="cr"><input type="range" id="sf" min="0.3" max="6" step="0.1" value="2"><span class="cv2" id="vf">2.0</span></div>
+    </div>
+    <div class="cl">
+      <label>Amplitude</label>
+      <div class="cr"><input type="range" id="sa" min="0.05" max="1.2" step="0.05" value="0.5"><span class="cv2" id="va">0.50</span></div>
+    </div>
+    <div class="cl">
+      <label>Comprimento de onda</label>
+      <div class="cr"><input type="range" id="sl" min="0.5" max="4" step="0.1" value="1.5"><span class="cv2" id="vl">1.5</span></div>
+    </div>
+    <div class="cl">
+      <label>Amortecimento radial</label>
+      <div class="cr"><input type="range" id="sd" min="0" max="1.5" step="0.05" value="0.4"><span class="cv2" id="vd">0.40</span></div>
+    </div>
+    <div class="cl">
+      <label>Auto-rotação câmara</label>
+      <div class="cr"><input type="range" id="sr" min="0" max="2" step="0.1" value="0.4"><span class="cv2" id="vr">0.40</span></div>
+    </div>
+    <div class="cl">
+      <label>Velocidade da onda</label>
+      <div class="cr"><input type="range" id="sv" min="0.5" max="4" step="0.1" value="1.5"><span class="cv2" id="vv">1.50</span></div>
+    </div>
+  </div>
+
+  <div class="br">
+    <button id="bp">Pausar</button>
+    <button id="bw">Grade: ligada</button>
+    <button id="bc">Cor: água</button>
+    <button id="bclick">Clique = nova fonte</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas = document.getElementById('cv');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(devicePixelRatio);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(0, 7, 7);
+camera.lookAt(0, 0, 0);
+
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+renderer.setClearColor(dark ? 0x0a0e18 : 0xe8eef5, 1);
+
+const SEGS = 120;
+const SIZE = 8;
+const geo = new THREE.PlaneGeometry(SIZE, SIZE, SEGS, SEGS);
+geo.rotateX(-Math.PI / 2);
+
+const nVerts = (SEGS + 1) * (SEGS + 1);
+const colBuf = new Float32Array(nVerts * 3);
+geo.setAttribute('color', new THREE.BufferAttribute(colBuf, 3));
+
+const matSurface = new THREE.MeshPhongMaterial({
+  vertexColors: true,
+  side: THREE.DoubleSide,
+  shininess: 120,
+  specular: new THREE.Color(0.6, 0.7, 0.9),
+});
+const mesh = new THREE.Mesh(geo, matSurface);
+scene.add(mesh);
+
+const matWire = new THREE.MeshBasicMaterial({
+  color: dark ? 0x335588 : 0x224477,
+  wireframe: true, opacity: 0.18, transparent: true
+});
+const wireMesh = new THREE.Mesh(geo, matWire);
+scene.add(wireMesh);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const sun = new THREE.DirectionalLight(0xffeedd, 1.1);
+sun.position.set(5, 10, 5);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(dark ? 0x2244aa : 0xaaccff, 0.5);
+fill.position.set(-4, 3, -4);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+rim.position.set(0, -5, 0);
+scene.add(rim);
+
+let sources = [{ x: 0, z: 0, phase: 0 }];
+let paused = false, t = 0, camPhi = 0, camTheta = 0.6, camR = 9;
+let autoRot = 0.4, useWire = true, colorMode = 'water', clickSource = false;
+let dragging = false, lastX = 0, lastY = 0;
+
+const MODES = {
+  '1': [{ x: 0, z: 0, phase: 0 }],
+  '2': [{ x: -1.5, z: 0, phase: 0 }, { x: 1.5, z: 0, phase: 0 }],
+  '3': [{ x: 0, z: -1.8, phase: 0 }, { x: -1.6, z: 0.9, phase: 0 }, { x: 1.6, z: 0.9, phase: 0 }],
+  '4': [{ x: -1.5, z: -1.5, phase: 0 }, { x: 1.5, z: -1.5, phase: 0 }, { x: -1.5, z: 1.5, phase: 0 }, { x: 1.5, z: 1.5, phase: 0 }],
+  'ring': Array.from({ length: 8 }, (_, i) => ({ x: 2.2 * Math.cos(i * Math.PI / 4), z: 2.2 * Math.sin(i * Math.PI / 4), phase: i * Math.PI / 4 }))
+};
+
+function setMode(key) {
+  sources = MODES[key].map(s => ({ ...s }));
+  t = 0;
+}
+
+function gv(id) { return parseFloat(document.getElementById(id).value); }
+
+function waveAt(x, z, time) {
+  const f = gv('sf'), A = gv('sa'), lam = gv('sl'), damp = gv('sd'), spd = gv('sv');
+  const k = (2 * Math.PI) / lam;
+  const omega = 2 * Math.PI * f;
+  let h = 0;
+  for (const src of sources) {
+    const dx = x - src.x, dz = z - src.z;
+    const r = Math.sqrt(dx * dx + dz * dz) + 0.001;
+    const decay = Math.exp(-damp * r * 0.5);
+    const spread = 1 / (1 + r * 0.4);
+    h += A * spread * decay * Math.sin(k * r - omega * time * spd + src.phase);
+  }
+  return h;
+}
+
+function waterColor(nrm) {
+  if (colorMode === 'water') {
+    if (dark) {
+      return [
+        0.02 + nrm * 0.08,
+        0.12 + nrm * 0.28,
+        0.35 + nrm * 0.45
+      ];
+    }
+    return [
+      0.05 + nrm * 0.2,
+      0.3 + nrm * 0.35,
+      0.6 + nrm * 0.35
+    ];
+  }
+  if (colorMode === 'heat') {
+    const stops = [[0.05,0.05,0.4],[0.1,0.5,0.8],[0.1,0.9,0.4],[0.9,0.8,0.1],[0.9,0.2,0.05]];
+    const s = nrm * (stops.length - 1);
+    const i = Math.min(Math.floor(s), stops.length - 2);
+    const f = s - i;
+    return stops[i].map((v, j) => v + (stops[i+1][j] - v) * f);
+  }
+  const v = dark ? 0.4 + nrm * 0.3 : 0.5 + nrm * 0.3;
+  return [v, v, v];
+}
+
+function updateMesh() {
+  const pos = geo.attributes.position;
+  const col = geo.attributes.color;
+  let mn = Infinity, mx = -Infinity;
+  const ys = new Float32Array(pos.count);
+  for (let i = 0; i < pos.count; i++) {
+    const y = waveAt(pos.getX(i), pos.getZ(i), t);
+    ys[i] = y;
+    if (y < mn) mn = y;
+    if (y > mx) mx = y;
+  }
+  const range = mx - mn || 0.001;
+  for (let i = 0; i < pos.count; i++) {
+    pos.setY(i, ys[i]);
+    const [r, g, b] = waterColor((ys[i] - mn) / range);
+    col.setXYZ(i, r, g, b);
+  }
+  pos.needsUpdate = true;
+  col.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+canvas.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('mouseup', () => dragging = false);
+canvas.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  camPhi -= (e.clientX - lastX) * 0.006;
+  camTheta = Math.max(0.08, Math.min(1.35, camTheta + (e.clientY - lastY) * 0.006));
+  lastX = e.clientX; lastY = e.clientY;
+});
+canvas.addEventListener('wheel', e => { camR = Math.max(3, Math.min(16, camR + e.deltaY * 0.012)); }, { passive: true });
+
+canvas.addEventListener('touchstart', e => { dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  camPhi -= (e.touches[0].clientX - lastX) * 0.006;
+  camTheta = Math.max(0.08, Math.min(1.35, camTheta + (e.touches[0].clientY - lastY) * 0.006));
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+}, { passive: false });
+canvas.addEventListener('touchend', () => dragging = false);
+
+canvas.addEventListener('click', e => {
+  if (!clickSource) return;
+  const rect = canvas.getBoundingClientRect();
+  const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  const nz = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  const wx = nx * SIZE / 2 * 0.9;
+  const wz = -nz * SIZE / 2 * 0.5;
+  sources.push({ x: wx, z: wz, phase: Math.random() * Math.PI * 2 });
+});
+
+['sf','sa','sl','sd','sr','sv'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function() {
+    const v = parseFloat(this.value);
+    document.getElementById('v' + id[1]).textContent = v.toFixed(2);
+    if (id === 'sr') autoRot = v;
+  });
+});
+
+['1','2','3','4','ring'].forEach(k => {
+  document.getElementById('m' + k).addEventListener('click', function() {
+    document.querySelectorAll('.mb').forEach(b => b.classList.remove('on'));
+    this.classList.add('on');
+    setMode(k);
+  });
+});
+
+document.getElementById('bp').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? 'Continuar' : 'Pausar';
+});
+document.getElementById('bw').addEventListener('click', function() {
+  useWire = !useWire;
+  wireMesh.visible = useWire;
+  this.textContent = 'Grade: ' + (useWire ? 'ligada' : 'desligada');
+});
+document.getElementById('bc').addEventListener('click', function() {
+  const modes = ['water', 'heat', 'mono'];
+  const labels = ['água', 'calor', 'mono'];
+  const idx = (modes.indexOf(colorMode) + 1) % modes.length;
+  colorMode = modes[idx];
+  this.textContent = 'Cor: ' + labels[idx];
+});
+document.getElementById('bclick').addEventListener('click', function() {
+  clickSource = !clickSource;
+  this.textContent = clickSource ? 'Clique: ativo' : 'Clique = nova fonte';
+  this.style.fontWeight = clickSource ? '500' : '';
+});
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+  resize();
+  if (!paused) {
+    t += 0.016;
+    if (!dragging) camPhi += autoRot * 0.007;
+  }
+  camera.position.set(
+    camR * Math.sin(camTheta) * Math.sin(camPhi),
+    camR * Math.cos(camTheta),
+    camR * Math.sin(camTheta) * Math.cos(camPhi)
+  );
+  camera.lookAt(0, 0, 0);
+  updateMesh();
+  renderer.render(scene, camera);
+}
+
+loop();
+</script>
