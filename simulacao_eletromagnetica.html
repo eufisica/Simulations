@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulação Eletromagnética — Movimento de Carga</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0d14;
+    --panel: #0f1420;
+    --border: #1e2d4a;
+    --accent-blue: #3af0ff;
+    --accent-red: #ff4466;
+    --accent-green: #44ff88;
+    --accent-yellow: #ffcc00;
+    --text: #c8d8f0;
+    --text-dim: #5a7090;
+    --slider-track: #1a2540;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  header h1 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+  }
+
+  header .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ===== 3D CANVAS AREA ===== */
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  #canvas3d {
+    flex: 1;
+    display: block;
+    background: radial-gradient(ellipse at 50% 40%, #0d1830 0%, #070b12 70%);
+  }
+
+  .charts-row {
+    display: flex;
+    height: 130px;
+    border-top: 1px solid var(--border);
+  }
+
+  .chart-box {
+    flex: 1;
+    position: relative;
+    border-right: 1px solid var(--border);
+    padding: 6px 10px 4px;
+  }
+
+  .chart-box:last-child { border-right: none; }
+
+  .chart-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .chart-box canvas {
+    width: 100%;
+    height: 90px;
+    display: block;
+  }
+
+  /* ===== SIDE PANEL ===== */
+  .side-panel {
+    width: 260px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+  }
+
+  .section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .ctrl-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 28px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 3px;
+    background: var(--slider-track);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--accent-blue);
+  }
+
+  .ctrl-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-blue);
+    min-width: 38px;
+    text-align: right;
+  }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .param-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 60px;
+  }
+
+  .param-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    outline: none;
+    width: 60px;
+  }
+
+  .param-input:focus { border-color: var(--accent-blue); }
+
+  .pm-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .pm-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+  .v0-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .v0-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 3px;
+  }
+
+  .v0-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .v0-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 3px 5px;
+    border-radius: 3px;
+    outline: none;
+    text-align: center;
+    width: 100%;
+  }
+
+  .v0-input:focus { border-color: var(--accent-blue); }
+
+  .btn-reiniciar {
+    margin: 14px 16px 10px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    width: calc(100% - 32px);
+  }
+
+  .btn-reiniciar:hover {
+    background: var(--accent-blue);
+    color: var(--bg);
+    box-shadow: 0 0 12px var(--accent-blue);
+  }
+
+  .legend {
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Rotation cube visual */
+  .cube-display {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    margin-left: auto;
+    margin-top: -44px;
+  }
+
+  canvas.cube-canvas {
+    width: 48px;
+    height: 48px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Simulação Eletromagnética</h1>
+  <span class="subtitle">Movimento de Carga em Campos E e B Combinados</span>
+</header>
+
+<div class="main-layout">
+  <div class="canvas-area">
+    <canvas id="canvas3d"></canvas>
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">POSIÇÃO vs. TEMPO</div>
+        <canvas id="chartPos"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">ENERGIA vs. TEMPO</div>
+        <canvas id="chartEng"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-panel">
+    <div class="panel-header">Controles de Simulação</div>
+
+    <div class="section">
+      <div class="section-title">Visualização 3D</div>
+
+      <div class="control-row">
+        <span class="ctrl-label">X</span>
+        <input type="range" id="rotX" min="-180" max="180" value="25">
+        <span class="ctrl-value" id="rotXVal">25°</span>
+      </div>
+      <div class="control-row">
+        <span class="ctrl-label">Y</span>
+        <input type="range" id="rotY" min="-180" max="180" value="90">
+        <span class="ctrl-value" id="rotYVal">90°</span>
+      </div>
+      <div class="control-row">
+        <span class="ctrl-label">Z</span>
+        <input type="range" id="rotZ" min="-180" max="180" value="125">
+        <span class="ctrl-value" id="rotZVal">125°</span>
+      </div>
+      <div class="control-row">
+        <span class="ctrl-label" style="min-width:40px">ZOOM</span>
+        <input type="range" id="zoom" min="0.4" max="2.5" step="0.05" value="1.0">
+        <span class="ctrl-value" id="zoomVal">1.0×</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Parâmetros de Campo</div>
+      <div class="control-row">
+        <span class="ctrl-label" style="min-width:80px;font-size:10px">CAMPO ELÉTRICO (E)</span>
+        <input type="range" id="fieldE" min="0" max="5" step="0.1" value="1.5">
+        <span class="ctrl-value" id="fieldEVal">1.5</span>
+      </div>
+      <div class="control-row">
+        <span class="ctrl-label" style="min-width:80px;font-size:10px">CAMPO MAGNÉTICO (B)</span>
+        <input type="range" id="fieldB" min="0" max="5" step="0.1" value="2.0">
+        <span class="ctrl-value" id="fieldBVal">2.0</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Parâmetros da Carga</div>
+      <div class="param-row">
+        <span class="param-label">CARGA (q)</span>
+        <input type="number" class="param-input" id="charge" value="1" step="0.5">
+        <button class="pm-btn" onclick="adj('charge',0.5)">+</button>
+        <button class="pm-btn" onclick="adj('charge',-0.5)">−</button>
+      </div>
+      <div class="param-row">
+        <span class="param-label">MASSA (m)</span>
+        <input type="number" class="param-input" id="mass" value="1" step="0.5" min="0.1">
+        <button class="pm-btn" onclick="adj('mass',0.5)">+</button>
+        <button class="pm-btn" onclick="adj('mass',-0.5)">−</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Velocidade Inicial (v₀)</div>
+      <div class="v0-row">
+        <div class="v0-group">
+          <span class="v0-label">v₀x</span>
+          <input type="number" class="v0-input" id="v0x" value="2" step="0.5">
+        </div>
+        <div class="v0-group">
+          <span class="v0-label">v₀y</span>
+          <input type="number" class="v0-input" id="v0y" value="0" step="0.5">
+        </div>
+        <div class="v0-group">
+          <span class="v0-label">v₀z</span>
+          <input type="number" class="v0-input" id="v0z" value="1" step="0.5">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-reiniciar" onclick="restart()">Reiniciar</button>
+
+    <div class="legend">
+      <div class="section-title" style="margin-bottom:6px">Legenda</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3af0ff"></div>Trajetória da partícula</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6688"></div>Campo magnético (B)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#44ff88"></div>Campo elétrico (E)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffcc00"></div>Força de Lorentz (F)</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  SIMULATION STATE
+// ============================================================
+const TWO_PI = Math.PI * 2;
+let sim = {};
+
+function getParams() {
+  return {
+    E: parseFloat(document.getElementById('fieldE').value),
+    B: parseFloat(document.getElementById('fieldB').value),
+    q: parseFloat(document.getElementById('charge').value) || 1,
+    m: Math.max(0.1, parseFloat(document.getElementById('mass').value) || 1),
+    v0x: parseFloat(document.getElementById('v0x').value) || 0,
+    v0y: parseFloat(document.getElementById('v0y').value) || 0,
+    v0z: parseFloat(document.getElementById('v0z').value) || 0,
+    rotX: parseFloat(document.getElementById('rotX').value) * Math.PI / 180,
+    rotY: parseFloat(document.getElementById('rotY').value) * Math.PI / 180,
+    rotZ: parseFloat(document.getElementById('rotZ').value) * Math.PI / 180,
+    zoom: parseFloat(document.getElementById('zoom').value),
+  };
+}
+
+function restart() {
+  const p = getParams();
+  sim = {
+    t: 0,
+    dt: 0.016,
+    pos: [0, 0, 0],
+    vel: [p.v0x, p.v0y, p.v0z],
+    trail: [],
+    maxTrail: 300,
+    histPos: { x: [], y: [], z: [] },
+    histEng: [],
+    histT: [],
+    maxHist: 200,
+    params: p,
+    running: true,
+  };
+}
+
+// ============================================================
+//  PHYSICS — Lorentz force  F = q(E + v×B)
+//  E along z, B along z (simple case; user scales magnitudes)
+// ============================================================
+function stepPhysics() {
+  const { dt, pos, vel, params: p } = sim;
+  const { q, m, E, B } = p;
+
+  // E field: along -Y (downward in world space)
+  const Ex = 0, Ey = -E, Ez = 0;
+  // B field: along Z
+  const Bx = 0, By = 0, Bz = B;
+
+  const [vx, vy, vz] = vel;
+
+  // v × B
+  const cxBx = vy * Bz - vz * By;
+  const cxBy = vz * Bx - vx * Bz;
+  const cxBz = vx * By - vy * Bx;
+
+  const ax = (q / m) * (Ex + cxBx);
+  const ay = (q / m) * (Ey + cxBy);
+  const az = (q / m) * (Ez + cxBz);
+
+  vel[0] += ax * dt;
+  vel[1] += ay * dt;
+  vel[2] += az * dt;
+
+  pos[0] += vel[0] * dt;
+  pos[1] += vel[1] * dt;
+  pos[2] += vel[2] * dt;
+
+  sim.t += dt;
+
+  sim.trail.push([...pos]);
+  if (sim.trail.length > sim.maxTrail) sim.trail.shift();
+
+  const spd = Math.sqrt(vel[0]**2 + vel[1]**2 + vel[2]**2);
+  const KE = 0.5 * m * spd * spd;
+
+  if (sim.histT.length > sim.maxHist) {
+    sim.histT.shift(); sim.histEng.shift();
+    sim.histPos.x.shift(); sim.histPos.y.shift(); sim.histPos.z.shift();
+  }
+  sim.histT.push(sim.t);
+  sim.histEng.push(KE);
+  sim.histPos.x.push(pos[0]);
+  sim.histPos.y.push(pos[1]);
+  sim.histPos.z.push(pos[2]);
+}
+
+// ============================================================
+//  3D → 2D PROJECTION  (simple perspective + rotation)
+// ============================================================
+function rotatePoint(px, py, pz, rx, ry, rz) {
+  // Rotate Z
+  let x = px * Math.cos(rz) - py * Math.sin(rz);
+  let y = px * Math.sin(rz) + py * Math.cos(rz);
+  let z = pz;
+  // Rotate X
+  let y2 = y * Math.cos(rx) - z * Math.sin(rx);
+  let z2 = y * Math.sin(rx) + z * Math.cos(rx);
+  y = y2; z = z2;
+  // Rotate Y
+  let x2 = x * Math.cos(ry) + z2 * Math.sin(ry);
+  let z3 = -x * Math.sin(ry) + z2 * Math.cos(ry);
+  return [x2, y, z3];
+}
+
+function project(px, py, pz, W, H, scale, rx, ry, rz) {
+  const [rx2, ry2, rz2] = rotatePoint(px, py, pz, rx, ry, rz);
+  const fov = 6;
+  const d = fov + rz2 * 0.1;
+  const sx = W / 2 + (rx2 / d) * scale * W * 0.5;
+  const sy = H / 2 - (ry2 / d) * scale * H * 0.5;
+  return [sx, sy, d];
+}
+
+// ============================================================
+//  DRAW 3D SCENE
+// ============================================================
+const c3 = document.getElementById('canvas3d');
+const ctx3 = c3.getContext('2d');
+
+function resizeCanvases() {
+  const rect = c3.getBoundingClientRect();
+  c3.width = rect.width;
+  c3.height = rect.height;
+  const cp = document.getElementById('chartPos');
+  const ce = document.getElementById('chartEng');
+  cp.width = cp.getBoundingClientRect().width;
+  cp.height = 90;
+  ce.width = ce.getBoundingClientRect().width;
+  ce.height = 90;
+}
+
+function drawGrid(W, H, p) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom } = p;
+  const sc = zoom;
+  ctx3.strokeStyle = 'rgba(30,45,74,0.7)';
+  ctx3.lineWidth = 0.5;
+  const G = 5, step = 1;
+  // XY plane (z=0)
+  for (let i = -G; i <= G; i++) {
+    ctx3.beginPath();
+    const [ax, ay] = project(i * step, -G * step, 0, W, H, sc, rx, ry, rz);
+    const [bx, by] = project(i * step,  G * step, 0, W, H, sc, rx, ry, rz);
+    ctx3.moveTo(ax, ay); ctx3.lineTo(bx, by); ctx3.stroke();
+    ctx3.beginPath();
+    const [cx, cy] = project(-G * step, i * step, 0, W, H, sc, rx, ry, rz);
+    const [dx, dy] = project( G * step, i * step, 0, W, H, sc, rx, ry, rz);
+    ctx3.moveTo(cx, cy); ctx3.lineTo(dx, dy); ctx3.stroke();
+  }
+  // XZ back plane
+  ctx3.strokeStyle = 'rgba(20,35,60,0.5)';
+  for (let i = -G; i <= G; i++) {
+    ctx3.beginPath();
+    const [ax, ay] = project(i * step, G * step, -G * step, W, H, sc, rx, ry, rz);
+    const [bx, by] = project(i * step, G * step,  G * step, W, H, sc, rx, ry, rz);
+    ctx3.moveTo(ax, ay); ctx3.lineTo(bx, by); ctx3.stroke();
+    ctx3.beginPath();
+    const [cx, cy] = project(-G * step, G * step, i * step, W, H, sc, rx, ry, rz);
+    const [dx, dy] = project( G * step, G * step, i * step, W, H, sc, rx, ry, rz);
+    ctx3.moveTo(cx, cy); ctx3.lineTo(dx, dy); ctx3.stroke();
+  }
+}
+
+function drawAxes(W, H, p) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom } = p;
+  const sc = zoom;
+  const axs = [
+    { from: [-5,0,0], to: [5.5,0,0], label:'X', color:'#3a6090' },
+    { from: [0,-5,0], to: [0,5.5,0], label:'Y', color:'#3a6090' },
+    { from: [0,0,-5], to: [0,0,5.5], label:'Z', color:'#3a6090' },
+  ];
+  axs.forEach(a => {
+    const [x1,y1] = project(...a.from, W, H, sc, rx, ry, rz);
+    const [x2,y2] = project(...a.to, W, H, sc, rx, ry, rz);
+    ctx3.beginPath();
+    ctx3.strokeStyle = a.color;
+    ctx3.lineWidth = 1;
+    ctx3.moveTo(x1, y1); ctx3.lineTo(x2, y2); ctx3.stroke();
+    ctx3.fillStyle = '#5a80b0';
+    ctx3.font = '600 12px Rajdhani';
+    ctx3.fillText(a.label, x2 + 4, y2 + 4);
+  });
+}
+
+function drawFields(W, H, p) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom, B, E } = p;
+  const sc = zoom;
+  // B field: red helical rings
+  if (B > 0) {
+    const rings = 6;
+    const segments = 60;
+    for (let r = 0; r < rings; r++) {
+      const zPos = -2.5 + r * 1.0;
+      const radius = 2.5;
+      ctx3.beginPath();
+      ctx3.strokeStyle = `rgba(180,30,60,${0.3 + B * 0.08})`;
+      ctx3.lineWidth = 1;
+      for (let s = 0; s <= segments; s++) {
+        const angle = (s / segments) * TWO_PI;
+        const px = radius * Math.cos(angle);
+        const py = radius * Math.sin(angle);
+        const pz = zPos + (s / segments) * 0.8 - 0.4;
+        const [sx, sy] = project(px, py, pz, W, H, sc, rx, ry, rz);
+        if (s === 0) ctx3.moveTo(sx, sy); else ctx3.lineTo(sx, sy);
+      }
+      ctx3.stroke();
+    }
+    // B label
+    const [bx, by] = project(2.8, 2.8, 2, W, H, sc, rx, ry, rz);
+    ctx3.fillStyle = '#ff4466';
+    ctx3.font = 'bold 13px Rajdhani';
+    ctx3.fillText('B', bx, by);
+  }
+
+  // E field: green arrows along Z axis
+  if (E > 0) {
+    const gridPts = [-2, 0, 2];
+    gridPts.forEach(gx => {
+      gridPts.forEach(gy => {
+        const z1 = 2.5, z2 = -2.5;
+        const [ax2, ay2] = project(gx, gy, z1, W, H, sc, rx, ry, rz);
+        const [bx2, by2] = project(gx, gy, z2, W, H, sc, rx, ry, rz);
+        const alpha = Math.min(0.9, 0.3 + E * 0.12);
+        ctx3.beginPath();
+        ctx3.strokeStyle = `rgba(40,220,110,${alpha})`;
+        ctx3.lineWidth = 1;
+        ctx3.moveTo(ax2, ay2); ctx3.lineTo(bx2, by2);
+        // arrowhead
+        const dx = bx2 - ax2, dy = by2 - ay2;
+        const len = Math.sqrt(dx*dx+dy*dy);
+        if (len > 5) {
+          const ux = dx/len, uy = dy/len;
+          const arrowLen = 7;
+          ctx3.lineTo(bx2 - ux*arrowLen - uy*4, by2 - uy*arrowLen + ux*4);
+          ctx3.moveTo(bx2, by2);
+          ctx3.lineTo(bx2 - ux*arrowLen + uy*4, by2 - uy*arrowLen - ux*4);
+        }
+        ctx3.stroke();
+      });
+    });
+    const [ex, ey] = project(-2, -2, 2.5, W, H, sc, rx, ry, rz);
+    ctx3.fillStyle = '#44ff88';
+    ctx3.font = 'bold 13px Rajdhani';
+    ctx3.fillText('E', ex - 12, ey);
+  }
+}
+
+function drawTrail(W, H, p) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom } = p;
+  const sc = zoom;
+  const trail = sim.trail;
+  if (trail.length < 2) return;
+  // Glow trail
+  for (let pass = 0; pass < 2; pass++) {
+    ctx3.beginPath();
+    for (let i = 0; i < trail.length; i++) {
+      const [px, py, pz] = trail[i];
+      const [sx, sy] = project(px, py, pz, W, H, sc, rx, ry, rz);
+      const alpha = (i / trail.length);
+      if (i === 0) { ctx3.moveTo(sx, sy); }
+      else { ctx3.lineTo(sx, sy); }
+    }
+    if (pass === 0) {
+      ctx3.strokeStyle = 'rgba(58,240,255,0.15)';
+      ctx3.lineWidth = 5;
+    } else {
+      ctx3.strokeStyle = 'rgba(58,240,255,0.9)';
+      ctx3.lineWidth = 1.5;
+    }
+    ctx3.stroke();
+  }
+}
+
+function drawParticle(W, H, p) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom } = p;
+  const sc = zoom;
+  const [px, py, pz] = sim.pos;
+  const [sx, sy] = project(px, py, pz, W, H, sc, rx, ry, rz);
+
+  // Glow
+  const grd = ctx3.createRadialGradient(sx, sy, 0, sx, sy, 12);
+  grd.addColorStop(0, 'rgba(58,240,255,0.9)');
+  grd.addColorStop(0.4, 'rgba(58,240,255,0.3)');
+  grd.addColorStop(1, 'rgba(58,240,255,0)');
+  ctx3.beginPath();
+  ctx3.arc(sx, sy, 12, 0, TWO_PI);
+  ctx3.fillStyle = grd;
+  ctx3.fill();
+
+  // Core
+  ctx3.beginPath();
+  ctx3.arc(sx, sy, 4, 0, TWO_PI);
+  ctx3.fillStyle = '#ffffff';
+  ctx3.fill();
+
+  // Velocity arrow
+  const [vx, vy, vz] = sim.vel;
+  const speed = Math.sqrt(vx*vx+vy*vy+vz*vz);
+  if (speed > 0.01) {
+    const scale2 = 0.5;
+    const [ex, ey] = project(px + vx * scale2, py + vy * scale2, pz + vz * scale2, W, H, sc, rx, ry, rz);
+    ctx3.beginPath();
+    ctx3.strokeStyle = '#3af0ff';
+    ctx3.lineWidth = 2;
+    ctx3.moveTo(sx, sy);
+    ctx3.lineTo(ex, ey);
+    const dx = ex - sx, dy2 = ey - sy;
+    const len = Math.sqrt(dx*dx + dy2*dy2);
+    if (len > 4) {
+      const ux = dx/len, uy = dy2/len;
+      ctx3.lineTo(ex - ux*8 - uy*4, ey - uy*8 + ux*4);
+      ctx3.moveTo(ex, ey);
+      ctx3.lineTo(ex - ux*8 + uy*4, ey - uy*8 - ux*4);
+    }
+    ctx3.stroke();
+    ctx3.fillStyle = '#3af0ff';
+    ctx3.font = 'bold 11px Rajdhani';
+    ctx3.fillText('v', ex + 4, ey - 4);
+  }
+
+  // Force arrows
+  drawForceArrow(W, H, p, px, py, pz, sx, sy, 'Fm', '#ffcc00', 0, 0, -1.2);
+  drawForceArrow(W, H, p, px, py, pz, sx, sy, 'Fe', '#44ff88', 0, -1.2, 0);
+}
+
+function drawForceArrow(W, H, p, px, py, pz, sx, sy, label, color, fdx, fdy, fdz) {
+  const { rotX: rx, rotY: ry, rotZ: rz, zoom } = p;
+  const sc = zoom;
+  const [ex, ey] = project(px + fdx, py + fdy, pz + fdz, W, H, sc, rx, ry, rz);
+  ctx3.beginPath();
+  ctx3.strokeStyle = color;
+  ctx3.lineWidth = 1.5;
+  ctx3.setLineDash([4, 2]);
+  ctx3.moveTo(sx, sy);
+  ctx3.lineTo(ex, ey);
+  const dx = ex - sx, dy = ey - sy;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  if (len > 4) {
+    ctx3.setLineDash([]);
+    const ux = dx/len, uy = dy/len;
+    ctx3.lineTo(ex - ux*7 - uy*3.5, ey - uy*7 + ux*3.5);
+    ctx3.moveTo(ex, ey);
+    ctx3.lineTo(ex - ux*7 + uy*3.5, ey - uy*7 - ux*3.5);
+  }
+  ctx3.stroke();
+  ctx3.setLineDash([]);
+  ctx3.fillStyle = color;
+  ctx3.font = '600 10px Share Tech Mono';
+  ctx3.fillText(label, ex + 4, ey);
+}
+
+function draw3D() {
+  const W = c3.width, H = c3.height;
+  ctx3.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bg = ctx3.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  bg.addColorStop(0, '#0d1830');
+  bg.addColorStop(1, '#070b12');
+  ctx3.fillStyle = bg;
+  ctx3.fillRect(0, 0, W, H);
+
+  const p = getParams();
+  drawGrid(W, H, p);
+  drawAxes(W, H, p);
+  drawFields(W, H, p);
+  drawTrail(W, H, p);
+  drawParticle(W, H, p);
+
+  // Time stamp
+  ctx3.fillStyle = 'rgba(58,240,255,0.4)';
+  ctx3.font = '11px Share Tech Mono';
+  ctx3.fillText(`t = ${sim.t.toFixed(2)} s`, 12, H - 10);
+}
+
+// ============================================================
+//  CHARTS
+// ============================================================
+function drawChart(canvasId, datasets, title) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#070b12';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#1a2540';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = i * H / 4;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let i = 0; i <= 5; i++) {
+    const x = i * W / 5;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  if (!sim.histT || sim.histT.length < 2) return;
+
+  datasets.forEach(({ data, color }) => {
+    if (!data || data.length < 2) return;
+    const minV = Math.min(...data), maxV = Math.max(...data);
+    const range = maxV - minV || 1;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < data.length; i++) {
+      const x = (i / (data.length - 1)) * W;
+      const y = H - ((data[i] - minV) / range) * (H - 8) - 4;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  });
+}
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+function loop() {
+  if (sim.running) {
+    for (let i = 0; i < 3; i++) stepPhysics();
+
+    // Clamp position to avoid runaway
+    const maxDist = 8;
+    const d = Math.sqrt(sim.pos[0]**2 + sim.pos[1]**2 + sim.pos[2]**2);
+    if (d > maxDist) {
+      sim.pos = sim.pos.map(x => x * maxDist / d);
+      sim.vel = sim.vel.map(v => v * 0.5);
+    }
+  }
+
+  draw3D();
+
+  drawChart('chartPos', [
+    { data: sim.histPos.x, color: '#3af0ff' },
+    { data: sim.histPos.y, color: '#ff4466' },
+    { data: sim.histPos.z, color: '#44ff88' },
+  ]);
+
+  drawChart('chartEng', [
+    { data: sim.histEng, color: '#ffcc00' },
+  ]);
+
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+//  UI CONTROLS
+// ============================================================
+function adj(id, delta) {
+  const el = document.getElementById(id);
+  const val = parseFloat(el.value) + delta;
+  el.value = id === 'mass' ? Math.max(0.1, val) : val;
+}
+
+function bindSlider(id, valId, suffix, decimals) {
+  const sl = document.getElementById(id);
+  const vl = document.getElementById(valId);
+  sl.addEventListener('input', () => {
+    vl.textContent = parseFloat(sl.value).toFixed(decimals) + suffix;
+  });
+}
+
+bindSlider('rotX', 'rotXVal', '°', 0);
+bindSlider('rotY', 'rotYVal', '°', 0);
+bindSlider('rotZ', 'rotZVal', '°', 0);
+bindSlider('zoom', 'zoomVal', '×', 1);
+bindSlider('fieldE', 'fieldEVal', '', 1);
+bindSlider('fieldB', 'fieldBVal', '', 1);
+
+// Mouse drag to rotate
+let dragging = false, lastMX = 0, lastMY = 0;
+c3.addEventListener('mousedown', e => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+window.addEventListener('mouseup', () => dragging = false);
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastMX, dy = e.clientY - lastMY;
+  const ry = document.getElementById('rotY');
+  const rx = document.getElementById('rotX');
+  ry.value = ((parseFloat(ry.value) + dx * 0.5 + 180) % 360) - 180;
+  rx.value = Math.max(-180, Math.min(180, parseFloat(rx.value) - dy * 0.5));
+  document.getElementById('rotYVal').textContent = parseFloat(ry.value).toFixed(0) + '°';
+  document.getElementById('rotXVal').textContent = parseFloat(rx.value).toFixed(0) + '°';
+  lastMX = e.clientX; lastMY = e.clientY;
+});
+
+// Touch drag
+c3.addEventListener('touchstart', e => { dragging = true; lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY; });
+c3.addEventListener('touchend', () => dragging = false);
+c3.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const dx = e.touches[0].clientX - lastMX, dy = e.touches[0].clientY - lastMY;
+  const ry = document.getElementById('rotY');
+  const rx = document.getElementById('rotX');
+  ry.value = ((parseFloat(ry.value) + dx * 0.5 + 180) % 360) - 180;
+  rx.value = Math.max(-180, Math.min(180, parseFloat(rx.value) - dy * 0.5));
+  document.getElementById('rotYVal').textContent = parseFloat(ry.value).toFixed(0) + '°';
+  document.getElementById('rotXVal').textContent = parseFloat(rx.value).toFixed(0) + '°';
+  lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+});
+
+// Wheel zoom
+c3.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zEl = document.getElementById('zoom');
+  zEl.value = Math.max(0.4, Math.min(2.5, parseFloat(zEl.value) - e.deltaY * 0.001));
+  document.getElementById('zoomVal').textContent = parseFloat(zEl.value).toFixed(1) + '×';
+}, { passive: false });
+
+window.addEventListener('resize', () => { resizeCanvases(); });
+
+// ============================================================
+//  INIT
+// ============================================================
+resizeCanvases();
+restart();
+loop();
+</script>
+</body>
+</html>

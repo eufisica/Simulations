@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulação de Fissão Nuclear - José Gonçalves</title>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #122033, #05070d);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      max-width: 380px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 16px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      z-index: 10;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #7fe8ff;
+      font-size: 24px;
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    button {
+      margin-top: 12px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #1dc4ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .legend {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .legend-item {
+      margin-bottom: 6px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="hud">
+  <h1>Reação em Cadeia Nuclear - José Gonçalves</h1>
+
+  <p>
+    Um neutrão colide com um núcleo de urânio-235.
+    O núcleo divide-se em fragmentos menores e liberta energia e novos neutrões,
+    criando uma reação em cadeia.
+  </p>
+
+  <div class="legend">
+    <div class="legend-item">
+      <span class="dot" style="background:#52ff8f"></span>
+      Neutrões
+    </div>
+
+    <div class="legend-item">
+      <span class="dot" style="background:#ffd452"></span>
+      Átomos de Urânio-235
+    </div>
+
+    <div class="legend-item">
+      <span class="dot" style="background:#ff6666"></span>
+      Fragmentos de Fissão
+    </div>
+  </div>
+
+  <button onclick="resetSimulation()">
+    Reiniciar Simulação
+  </button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let width;
+  let height;
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor(x, y, radius, color, vx = 0, vy = 0) {
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
+      this.color = color;
+      this.vx = vx;
+      this.vy = vy;
+    }
+
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+    }
+
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = this.color;
+      ctx.fill();
+    }
+  }
+
+  let neutrons = [];
+  let uraniumAtoms = [];
+  let fragments = [];
+  let explosionParticles = [];
+
+  function init() {
+    neutrons = [];
+    uraniumAtoms = [];
+    fragments = [];
+    explosionParticles = [];
+
+    neutrons.push(
+      new Particle(60, height / 2, 8, '#52ff8f', 4, 0)
+    );
+
+    const rows = 3;
+    const cols = 4;
+
+    const spacingX = 180;
+    const spacingY = 150;
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        uraniumAtoms.push({
+          particle: new Particle(
+            width / 2 - 260 + col * spacingX,
+            height / 2 - 150 + row * spacingY,
+            36,
+            '#ffd452'
+          ),
+          fissioned: false
+        });
+      }
+    }
+  }
+
+  function createExplosion(x, y) {
+    for (let i = 0; i < 60; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5;
+
+      explosionParticles.push({
+        x,
+        y,
+        radius: Math.random() * 3 + 1,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1
+      });
+    }
+  }
+
+  function triggerFission(atom) {
+    atom.fissioned = true;
+
+    const uranium = atom.particle;
+
+    fragments.push(
+      new Particle(
+        uranium.x - 18,
+        uranium.y - 10,
+        18,
+        '#ff6666',
+        -2,
+        -1.5
+      )
+    );
+
+    fragments.push(
+      new Particle(
+        uranium.x + 18,
+        uranium.y + 10,
+        15,
+        '#ff9966',
+        2,
+        1.5
+      )
+    );
+
+    for (let i = 0; i < 3; i++) {
+      const angle = Math.random() * Math.PI * 2;
+
+      neutrons.push(
+        new Particle(
+          uranium.x,
+          uranium.y,
+          7,
+          '#52ff8f',
+          Math.cos(angle) * 4,
+          Math.sin(angle) * 4
+        )
+      );
+    }
+
+    createExplosion(uranium.x, uranium.y);
+  }
+
+  function drawEnergyWave(x, y) {
+    const pulse = (Date.now() % 1000) / 1000;
+    const radius = pulse * 100;
+
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0, 200, 255, ${1 - pulse})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  function updateExplosions() {
+    explosionParticles.forEach((p, index) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= 0.02;
+
+      if (p.alpha <= 0) {
+        explosionParticles.splice(index, 1);
+        return;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,220,120,${p.alpha})`;
+      ctx.fill();
+    });
+  }
+
+  function drawLabels() {
+    ctx.fillStyle = 'white';
+    ctx.font = '18px Arial';
+
+    ctx.fillText(
+      'Reação em cadeia da fissão nuclear',
+      30,
+      height - 40
+    );
+
+    ctx.fillText(
+      'Os neutrões libertados atingem outros núcleos.',
+      30,
+      height - 15
+    );
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    ctx.fillStyle = 'rgba(5, 8, 13, 0.25)';
+    ctx.fillRect(0, 0, width, height);
+
+    uraniumAtoms.forEach(atom => {
+      if (!atom.fissioned) {
+        atom.particle.draw();
+      } else {
+        drawEnergyWave(atom.particle.x, atom.particle.y);
+      }
+    });
+
+    neutrons.forEach(neutron => {
+      neutron.update();
+      neutron.draw();
+
+      uraniumAtoms.forEach(atom => {
+        if (atom.fissioned) {
+          return;
+        }
+
+        const dx = neutron.x - atom.particle.x;
+        const dy = neutron.y - atom.particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < atom.particle.radius) {
+          triggerFission(atom);
+        }
+      });
+    });
+
+    fragments.forEach(fragment => {
+      fragment.update();
+      fragment.draw();
+    });
+
+    updateExplosions();
+    drawLabels();
+  }
+
+  function resetSimulation() {
+    init();
+  }
+
+  init();
+  animate();
+</script>
+
+</body>
+</html>
