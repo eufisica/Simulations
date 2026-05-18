@@ -1,4 +1,3 @@
-# Animation by José Gonçalves
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -51,8 +50,8 @@ point3, = ax.plot([], [], 'ro')  # Point for the third projectile
 ax.legend()
 ax.set_xlabel("Horizontal Distance (m)")
 ax.set_ylabel("Vertical Distance (m)")
-ax.set_title("Ballistic Motion")
-
+ax.set_title("Ballistic Motion by José Gonçalves (eufisica)")
+             
 # Initialization function
 def init():
     line1.set_data([], [])
@@ -71,11 +70,11 @@ def update(frame):
     f3 = min(frame, len(t3) - 1)
 
     line1.set_data(x1[:f1], y1[:f1])
-    point1.set_data(x1[f1], y1[f1])
+    point1.set_data([x1[f1]], [y1[f1]])
     line2.set_data(x2[:f2], y2[:f2])
-    point2.set_data(x2[f2], y2[f2])
+    point2.set_data([x2[f2]], [y2[f2]])
     line3.set_data(x3[:f3], y3[:f3])
-    point3.set_data(x3[f3], y3[f3])
+    point3.set_data([x3[f3]], [y3[f3]])
     return line1, point1, line2, point2, line3, point3
 
 
