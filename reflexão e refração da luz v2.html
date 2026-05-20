@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Óptica: Frentes de Onda</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #2c3e50;
+        }
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            text-align: center;
+            color: #1a252f;
+        }
+        p.subtitle {
+            margin: 0 0 15px 0;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 950px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .canvas-container {
+            position: relative;
+            width: 850px;
+            height: 600px;
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .controls {
+            width: 100%;
+            margin-top: 25px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .slider-group label {
+            font-weight: 600;
+            min-width: 200px;
+            font-size: 1rem;
+        }
+        .slider-group input {
+            flex-grow: 1;
+            cursor: pointer;
+            height: 6px;
+        }
+        .slider-value {
+            font-weight: bold;
+            min-width: 60px;
+            text-align: right;
+            font-size: 1.1rem;
+            color: #3498db;
+        }
+        .legend {
+            display: flex;
+            gap: 25px;
+            margin-top: 15px;
+            font-size: 0.88rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simulação Óptica: Reflexão e Refração</h1>
+        <h2>José Gonçalves - eufisica</h2>
+        <p class="subtitle">Visualização das frentes de onda</p>
+        
+        <div class="canvas-container">
+            <canvas id="simCanvas" width="850" height="600"></canvas>
+        </div>
+
+        <div class="controls">
+            <div class="slider-group">
+                <label for="angleSlider">Ângulo de Incidência (θ₁):</label>
+                <input type="range" id="angleSlider" min="0" max="85" value="45" step="1">
+                <span class="slider-value" id="angleValue">45°</span>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color" style="background-color: #e74c3c;"></div> Raio / Frente Incidente (Ar)</div>
+            <div class="legend-item"><div class="legend-color" style="background-color: #f39c12;"></div> Raio Refletido</div>
+            <div class="legend-item"><div class="legend-color" style="background-color: #2ecc71;"></div> Raio / Frente Refratada (Vidro)</div>
+            <div class="legend-item"><div class="legend-color" style="background-color: #2980b9;"></div> Interface</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const angleSlider = document.getElementById('angleSlider');
+        const angleValue = document.getElementById('angleValue');
+
+        const n1 = 1.0; 
+        const n2 = 1.5; 
+        const lambda1 = 24; 
+
+        const cx = 360; 
+        const cy = 300;
+        const rLen = 240; 
+
+        const insetX = 580;
+        const insetY = 40;
+        const insetW = 240;
+        const insetH = 240;
+        const insetCX = insetX + insetW / 2;
+        const insetCY = insetY + insetH / 2;
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const degrees1 = parseFloat(angleSlider.value);
+            angleValue.textContent = degrees1 + '°';
+            const theta1 = degrees1 * Math.PI / 180;
+
+            const sin_theta2 = (n1 * Math.sin(theta1)) / n2;
+            const theta2 = Math.asin(sin_theta2);
+            const degrees2 = (theta2 * 180 / Math.PI).toFixed(1);
+            const lambda2 = lambda1 * (n1 / n2);
+
+            // Fundo Meios
+            ctx.fillStyle = 'rgba(173, 216, 230, 0.35)';
+            ctx.fillRect(0, cy, canvas.width, canvas.height - cy);
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(0, 0, canvas.width, cy);
+
+            // Normal
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(cx, 20);
+            ctx.lineTo(cx, canvas.height - 20);
+            ctx.stroke();
+            ctx.setLineDash([]); 
+
+            // Interface
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, cy);
+            ctx.lineTo(canvas.width, cy);
+            ctx.stroke();
+
+            // Rótulos fixos
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = 'italic bold 14px sans-serif';
+            ctx.fillText('Meio 1: Ar (n₁ = 1.0)', 20, cy - 15);
+            ctx.fillText('Meio 2: Vidro (n₂ = 1.5)', 20, cy + 25);
+
+            // Raios Coordenadas
+            const rx_inc = cx - rLen * Math.sin(theta1);
+            const ry_inc = cy - rLen * Math.cos(theta1);
+            const rx_ref = cx + rLen * Math.sin(theta1);
+            const ry_ref = cy - rLen * Math.cos(theta1);
+            const rx_refra = cx + rLen * Math.sin(theta2);
+            const ry_refra = cy + rLen * Math.cos(theta2);
+
+            // Desenhar Raios
+            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(rx_inc, ry_inc); ctx.lineTo(cx, cy); ctx.stroke();
+            ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(rx_ref, ry_ref); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(rx_refra, ry_refra); ctx.stroke();
+
+            // Nomes dos Raios
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#e74c3c'; ctx.fillText('Raio Incidente', rx_inc - 15, ry_inc - 10);
+            ctx.fillStyle = '#d35400'; ctx.fillText('Raio Refletido', rx_ref - 75, ry_ref - 10);
+            ctx.fillStyle = '#27ae60'; ctx.fillText('Raio Refratado', rx_refra + 10, ry_refra + 15);
+
+            // Arcos e Textos dos Ângulos
+            ctx.lineWidth = 1.5;
+            ctx.font = '12px sans-serif';
+            if (degrees1 > 3) {
+                ctx.strokeStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(cx, cy, 50, 1.5 * Math.PI - theta1, 1.5 * Math.PI); ctx.stroke();
+                let tx1 = cx - 70 * Math.sin(theta1/2); let ty1 = cy - 70 * Math.cos(theta1/2);
+                ctx.fillStyle = '#e74c3c'; ctx.fillText(`θ₁ = ${degrees1}°`, tx1 - 20, ty1);
+
+                ctx.strokeStyle = '#f39c12'; ctx.beginPath(); ctx.arc(cx, cy, 45, 1.5 * Math.PI, 1.5 * Math.PI + theta1); ctx.stroke();
+                let txr = cx + 65 * Math.sin(theta1/2); let tyr = cy - 65 * Math.cos(theta1/2);
+                ctx.fillStyle = '#d35400'; ctx.fillText(`θr = ${degrees1}°`, txr, tyr);
+            }
+            if (degrees2 > 1) {
+                ctx.strokeStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(cx, cy, 55, 0.5 * Math.PI, 0.5 * Math.PI - theta2, true); ctx.stroke();
+                let tx2 = cx + 75 * Math.sin(theta2/2); let ty2 = cy + 75 * Math.cos(theta2/2);
+                ctx.fillStyle = '#27ae60'; ctx.fillText(`θ₂ = ${degrees2}°`, tx2, ty2 + 5);
+            }
+
+            // ---------------------------------------------------------
+            // 3. QUADRO DE DETALHE (INSET) - CORREÇÃO DA INCLINAÇÃO (PARA A ESQUERDA)
+            // ---------------------------------------------------------
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(insetX, insetY, insetW, insetH);
+            
+            ctx.save();
+            ctx.beginPath(); ctx.rect(insetX, insetY, insetW, insetH); ctx.clip();
+
+            ctx.fillStyle = 'rgba(173, 216, 230, 0.25)';
+            ctx.fillRect(insetX, insetCY, insetW, insetH / 2);
+
+            // Interface e Normal internas
+            ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(insetX, insetCY); ctx.lineTo(insetX + insetW, insetCY); ctx.stroke();
+            ctx.strokeStyle = 'rgba(128, 128, 128, 0.3)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(insetCX, insetY); ctx.lineTo(insetCX, insetY + insetH); ctx.stroke(); ctx.setLineDash([]);
+
+            ctx.lineWidth = 1.5;
+            
+            // Frentes Incidentes (Ar) - Corrigido sinal para inclinar para a ESQUERDA
+            ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)';
+            for (let i = -15; i <= 15; i++) {
+                let d = i * lambda1;
+                ctx.beginPath();
+                let first = true;
+                for (let lx = -insetW; lx <= insetW; lx += 2) {
+                    // Sinais alterados para (-lx * sin - d): a inclinação agora é negativa (para a esquerda)
+                    let ly = (-lx * Math.sin(theta1) - d) / Math.cos(theta1);
+                    if (ly <= 0) { 
+                        let canvasX = insetCX + lx; let canvasY = insetCY + ly;
+                        if (first) { ctx.moveTo(canvasX, canvasY); first = false; } else { ctx.lineTo(canvasX, canvasY); }
+                    }
+                }
+                ctx.stroke();
+            }
+
+            // Frentes Refratadas (Vidro) - Corrigido sinal para inclinar para a ESQUERDA
+            ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)';
+            for (let i = -20; i <= 20; i++) {
+                let d = i * lambda2;
+                ctx.beginPath();
+                let first = true;
+                for (let lx = -insetW; lx <= insetW; lx += 2) {
+                    let ly = (-lx * Math.sin(theta2) - d) / Math.cos(theta2);
+                    if (ly >= 0) { 
+                        let canvasX = insetCX + lx; let canvasY = insetCY + ly;
+                        if (first) { ctx.moveTo(canvasX, canvasY); first = false; } else { ctx.lineTo(canvasX, canvasY); }
+                    }
+                }
+                ctx.stroke();
+            }
+
+            ctx.restore(); 
+
+            ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2; ctx.strokeRect(insetX, insetY, insetW, insetH);
+            ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('Frentes de Onda (Huygens)', insetX + 8, insetY + 18);
+        }
+
+        angleSlider.addEventListener('input', draw);
+        draw();
+    </script>
+</body>
+</html>
