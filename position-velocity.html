@@ -86,8 +86,8 @@
 
     <!-- Painel Superior -->
     <div id="topo">
-        <div id="val-r" class="indicador">Posição r = 0.00 m</div>
-        <div id="val-v" class="indicador">Velocidade v = 0.00 m/s</div>
+        <div id="val-r" class="indicador">Posição <i>r</i> = 0.00 m</div>
+        <div id="val-v" class="indicador">Velocidade <i>v</i> = 0.00 m/s</div>
     </div>
 
     <!-- Zona Central: Área de arrasto e Gráfico Y vs X -->
@@ -217,8 +217,8 @@
             // Atualizar os vetores de texto no topo
             let r = Math.sqrt(x*x + y*y);
             let v = Math.sqrt(vx*vx + vy*vy);
-            document.getElementById('val-r').innerText = `Posição r = ${r.toFixed(2)} m`;
-            document.getElementById('val-v').innerText = `Velocidade v = ${v.toFixed(2)} m/s`;
+            document.getElementById('val-r').innerHTML = `Posição <i>r</i> = ${r.toFixed(2)} m`;
+            document.getElementById('val-v').innerHTML = `Velocidade <i>v</i> = ${v.toFixed(2)} m/s`;
 
             // Atualizar instâncias do Chart.js
             chartYX.data.datasets[0].data = historico.x.map((val, i) => ({ x: val, y: historico.y[i] }));
