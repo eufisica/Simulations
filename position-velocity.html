@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Movimento Interativo - José Gonçalves (eufisica)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Painel Superior */
+        #topo {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        .indicador {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Área Principal (Grelha + Gráfico Y vs X) */
+        #zona-principal {
+            display: flex;
+            flex: 2;
+            gap: 10px;
+            min-height: 350px;
+            margin-bottom: 10px;
+        }
+        .contentor-canvas {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #canvas-simulacao {
+            border: 2px solid #ddd;
+            cursor: grab;
+            background-color: #ffffff;
+        }
+        #canvas-simulacao:active {
+            cursor: grabbing;
+        }
+
+        /* Área Inferior (Gráficos Temporais) */
+        #zona-inferior {
+            display: flex;
+            flex: 2;
+            gap: 10px;
+        }
+        .sub-grelha {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            flex: 2;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="topo">
+        <div id="val-r" class="indicador">Posição r = 0.00 m</div>
+        <div id="val-v" class="indicador">Velocidade v = 0.00 m/s</div>
+    </div>
+
+    <div id="zona-principal">
+        <div class="contentor-canvas">
+            <canvas id="canvas-simulacao"></canvas>
+        </div>
+        <div class="contentor-canvas">
+            <canvas id="chart-yx"></canvas>
+        </div>
+    </div>
+
+    <div id="zona-inferior">
+        <div class="sub-grelha">
+            <div class="contentor-canvas"><canvas id="chart-xt"></canvas></div>
+            <div class="contentor-canvas"><canvas id="chart-yt"></canvas></div>
+            <div class="contentor-canvas"><canvas id="chart-vxt"></canvas></div>
+            <div class="contentor-canvas"><canvas id="chart-vyt"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuração do Canvas de Simulação ---
+        const canvas = document.getElementById('canvas-simulacao');
+        const ctx = canvas.getContext('2d');
+
+        // Estado da bola e física
+        let bola = { x: 0, y: 0, raio: 10, arrastando: false };
+        let historico = { t: [], x: [], y: [], vx: [], vy: [] };
+        
+        let ultimoTempo = performance.now();
+        let tempoAcumulado = 0;
+        const maxPontos = 100; // Limite de pontos nos gráficos para performance
+
+        // Ajustar resolução interna do canvas de simulação
+        function redimensionarCanvas() {
+            canvas.width = canvas.parentElement.clientWidth - 20;
+            canvas.height = canvas.parentElement.clientHeight - 20;
+            if (historico.t.length === 0) {
+                // Inicia a bola no centro (0,0 físico)
+                bola.x = canvas.width / 2;
+                bola.y = canvas.height / 2;
+                registarPonto(0, 0, 0, 0);
+            }
+            desenharCena();
+        }
+
+        // Converter pixeis para metros (Consideramos que 20px = 1 metro)
+        const escala = 20;
+        function paraMetros(cx, cy) {
+            let mx = (cx - canvas.width / 2) / escala;
+            let my = (canvas.height / 2 - cy) / escala;
+            return { x: mx, y: my };
+        }
+
+        function desenharCena() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 1. Desenhar Grelha Quadriculada
+            ctx.strokeStyle = '#eef0f2';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += escala) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += escala) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // 2. Desenhar Eixos Centrais (0,0)
+            ctx.strokeStyle = '#999999';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); // Eixo Y
+            ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
+            ctx.beginPath(); // Eixo X
+            ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2); ctx.stroke();
+
+            // 3. Desenhar a Bola Vermelha
+            ctx.beginPath();
+            ctx.arc(bola.x, bola.y, bola.raio, 0, Math.PI * 2);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            ctx.strokeStyle = '#900';
+            ctx.stroke();
+        }
+
+        // --- Gestão de Dados e Gráficos (Chart.js) ---
+        function criarConfigBase(titulo, xLabel, yLabel, cor Linha) {
+            return {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: corLinha, borderWidth: 2, fill: false, pointRadius: 0 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: titulo }, legend: { display: false } },
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: xLabel } },
+                        y: { title: { display: true, text: yLabel } }
+                    },
+                    animation: false
+                }
+            };
+        }
+
+        // Inicialização de cada gráfico
+        const configYX = criarConfigBase('Posição: Y vs X', 'X (m)', 'Y (m)', 'red');
+        configYX.options.scales.x.min = -10; configYX.options.scales.x.max = 10;
+        configYX.options.scales.y = { min: -10, max: 10, title: { display: true, text: 'Y (m)' } };
+
+        const chartYX  = new Chart(document.getElementById('chart-yx'), configYX);
+        const chartXT  = new Chart(document.getElementById('chart-xt'), criarConfigBase('X vs Tempo', 't (s)', 'X (m)', 'blue'));
+        const chartYT  = new Chart(document.getElementById('chart-yt'), criarConfigBase('Y vs Tempo', 't (s)', 'Y (m)', 'green'));
+        const chartVXT = new Chart(document.getElementById('chart-vxt'), criarConfigBase('Vx vs Tempo', 't (s)', 'Vx (m/s)', 'purple'));
+        const chartVYT = new Chart(document.getElementById('chart-vyt'), criarConfigBase('Vy vs Tempo', 't (s)', 'Vy (m/s)', 'orange'));
+
+        function registarPonto(x, y, vx, vy) {
+            historico.t.push(tempoAcumulado);
+            historico.x.push(x);
+            historico.y.push(y);
+            historico.vx.push(vx);
+            historico.vy.push(vy);
+
+            if (historico.t.length > maxPontos) {
+                historico.t.shift(); historico.x.shift(); historico.y.shift(); historico.vx.shift(); historico.vy.shift();
+            }
+
+            // Atualizar os vetores de texto no topo
+            let r = Math.sqrt(x*x + y*y);
+            let v = Math.sqrt(vx*vx + vy*vy);
+            document.getElementById('val-r').innerText = `Posição r = ${r.toFixed(2)} m`;
+            document.getElementById('val-v').innerText = `Velocidade v = ${v.toFixed(2)} m/s`;
+
+            // Atualizar instâncias do Chart.js
+            chartYX.data.datasets[0].data = historico.x.map((val, i) => ({ x: val, y: historico.y[i] }));
+            chartXT.data.datasets[0].data = historico.t.map((val, i) => ({ x: val, y: historico.x[i] }));
+            chartYT.data.datasets[0].data = historico.t.map((val, i) => ({ x: val, y: historico.y[i] }));
+            chartVXT.data.datasets[0].data = historico.t.map((val, i) => ({ x: val, y: historico.vx[i] }));
+            chartVYT.data.datasets[0].data = historico.t.map((val, i) => ({ x: val, y: historico.vy[i] }));
+
+            [chartYX, chartXT, chartYT, chartVXT, chartVYT].forEach(c => c.update());
+        }
+
+        // --- Eventos do Rato / Touch ---
+        function obterPosicaoRato(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Suporte para Rato ou Touchscreen (Telemóvel)
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function iniciarArrasto(e) {
+            const pos = obterPosicaoRato(e);
+            const dist = Math.sqrt((pos.x - bola.x)**2 + (pos.y - bola.y)**2);
+            if (dist < bola.raio + 10) { // Margem de clique
+                bola.arrastando = true;
+                ultimoTempo = performance.now();
+            }
+        }
+
+        function moverBola(e) {
+            if (!bola.arrastando) return;
+            e.preventDefault();
+
+            const pos = obterPosicaoRato(e);
+            // Limites da tela
+            bola.x = Math.max(bola.raio, Math.min(canvas.width - bola.raio, pos.x));
+            bola.y = Math.max(bola.raio, Math.min(canvas.height - bola.raio, pos.y));
+
+            desenharCena();
+
+            // Cálculo do delta de tempo (Física)
+            let agora = performance.now();
+            let dt = (agora - ultimoTempo) / 1000; // converter para segundos
+            if (dt < 0.015) return; // Limitar taxa de amostragem (~60fps)
+
+            tempoAcumulado += dt;
+            ultimoTempo = agora;
+
+            let posAtualM = paraMetros(bola.x, bola.y);
+            let posAntigaM = paraMetros(historico.x.length ? canvas.width/2 + historico.x[historico.x.length-1]*escala : bola.x, historico.y.length ? canvas.height/2 - historico.y[historico.y.length-1]*escala : bola.y);
+
+            // Derivadas numéricas (Velocidade = dx/dt)
+            let vx = (posAtualM.x - posAntigaM.x) / dt;
+            let vy = (posAtualM.y - posAntigaM.y) / dt;
+
+            registarPonto(posAtualM.x, posAtualM.y, vx, vy);
+        }
+
+        function pararArrasto() {
+            if (bola.arrastando) {
+                bola.arrastando = false;
+                // Ao soltar, a velocidade passa a zero
+                tempoAcumulado += 0.01;
+                let posM = paraMetros(bola.x, bola.y);
+                registarPonto(posM.x, posM.y, 0, 0);
+            }
+        }
+
+        // Listeners para Rato
+        canvas.addEventListener('mousedown', iniciarArrasto);
+        window.addEventListener('mousemove', moverBola);
+        window.addEventListener('mouseup', pararArrasto);
+
+        // Listeners para Mobile/Touch
+        canvas.addEventListener('touchstart', iniciarArrasto);
+        window.addEventListener('touchmove', moverBola, { passive: false });
+        window.addEventListener('touchend', pararArrasto);
+
+        // Responsividade da janela
+        window.addEventListener('resize', redimensionarCanvas);
+        
+        // Inicialização
+        redimensionarCanvas();
+    </script>
+</body>
+</html>
