@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulação de Movimento Interativo - José Gonçalves (eufisica)</title>
+    <!-- Importar Chart.js para os gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -83,11 +84,13 @@
 </head>
 <body>
 
+    <!-- Painel Superior -->
     <div id="topo">
         <div id="val-r" class="indicador">Posição r = 0.00 m</div>
         <div id="val-v" class="indicador">Velocidade v = 0.00 m/s</div>
     </div>
 
+    <!-- Zona Central: Área de arrasto e Gráfico Y vs X -->
     <div id="zona-principal">
         <div class="contentor-canvas">
             <canvas id="canvas-simulacao"></canvas>
@@ -97,6 +100,7 @@
         </div>
     </div>
 
+    <!-- Zona Inferior: Gráficos Temporais (X, Y, Vx, Vy vs t) -->
     <div id="zona-inferior">
         <div class="sub-grelha">
             <div class="contentor-canvas"><canvas id="chart-xt"></canvas></div>
@@ -171,7 +175,7 @@
         }
 
         // --- Gestão de Dados e Gráficos (Chart.js) ---
-        function criarConfigBase(titulo, xLabel, yLabel, cor Linha) {
+        function criarConfigBase(titulo, xLabel, yLabel, corLinha) {
             return {
                 type: 'line',
                 data: { labels: [], datasets: [{ data: [], borderColor: corLinha, borderWidth: 2, fill: false, pointRadius: 0 }] },
@@ -229,7 +233,6 @@
         // --- Eventos do Rato / Touch ---
         function obterPosicaoRato(e) {
             const rect = canvas.getBoundingClientRect();
-            // Suporte para Rato ou Touchscreen (Telemóvel)
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             return {
@@ -241,7 +244,7 @@
         function iniciarArrasto(e) {
             const pos = obterPosicaoRato(e);
             const dist = Math.sqrt((pos.x - bola.x)**2 + (pos.y - bola.y)**2);
-            if (dist < bola.raio + 10) { // Margem de clique
+            if (dist < bola.raio + 10) {
                 bola.arrastando = true;
                 ultimoTempo = performance.now();
             }
@@ -252,16 +255,14 @@
             e.preventDefault();
 
             const pos = obterPosicaoRato(e);
-            // Limites da tela
             bola.x = Math.max(bola.raio, Math.min(canvas.width - bola.raio, pos.x));
             bola.y = Math.max(bola.raio, Math.min(canvas.height - bola.raio, pos.y));
 
             desenharCena();
 
-            // Cálculo do delta de tempo (Física)
             let agora = performance.now();
-            let dt = (agora - ultimoTempo) / 1000; // converter para segundos
-            if (dt < 0.015) return; // Limitar taxa de amostragem (~60fps)
+            let dt = (agora - ultimoTempo) / 1000;
+            if (dt < 0.015) return;
 
             tempoAcumulado += dt;
             ultimoTempo = agora;
@@ -269,7 +270,6 @@
             let posAtualM = paraMetros(bola.x, bola.y);
             let posAntigaM = paraMetros(historico.x.length ? canvas.width/2 + historico.x[historico.x.length-1]*escala : bola.x, historico.y.length ? canvas.height/2 - historico.y[historico.y.length-1]*escala : bola.y);
 
-            // Derivadas numéricas (Velocidade = dx/dt)
             let vx = (posAtualM.x - posAntigaM.x) / dt;
             let vy = (posAtualM.y - posAntigaM.y) / dt;
 
@@ -279,27 +279,22 @@
         function pararArrasto() {
             if (bola.arrastando) {
                 bola.arrastando = false;
-                // Ao soltar, a velocidade passa a zero
                 tempoAcumulado += 0.01;
                 let posM = paraMetros(bola.x, bola.y);
                 registarPonto(posM.x, posM.y, 0, 0);
             }
         }
 
-        // Listeners para Rato
         canvas.addEventListener('mousedown', iniciarArrasto);
         window.addEventListener('mousemove', moverBola);
         window.addEventListener('mouseup', pararArrasto);
 
-        // Listeners para Mobile/Touch
         canvas.addEventListener('touchstart', iniciarArrasto);
         window.addEventListener('touchmove', moverBola, { passive: false });
         window.addEventListener('touchend', pararArrasto);
 
-        // Responsividade da janela
         window.addEventListener('resize', redimensionarCanvas);
         
-        // Inicialização
         redimensionarCanvas();
     </script>
 </body>
