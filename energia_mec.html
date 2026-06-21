@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Energia Mecânica - eufisica</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f8f9fa;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            color: var(--primary);
+        }
+
+        .dashboard { 
+            display: flex; 
+            gap: 15px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            margin-bottom: 20px;
+        }
+
+        .data-card {
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .canvas-container { 
+            position: relative; 
+            background: white; 
+            border-radius: 15px; 
+            padding: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            display: flex; 
+            gap: 25px; 
+        }
+
+        canvas { 
+            border: 2px solid #ecf0f1; 
+            border-radius: 8px;
+            cursor: crosshair; 
+            background: #ffffff; 
+        }
+
+        .bars { display: flex; flex-direction: column; justify-content: space-between; width: 100px; height: 400px; }
+        .bar-group { height: 23%; width: 100%; display: flex; flex-direction: column; gap: 4px; }
+        .bar-container { flex-grow: 1; background: #eee; position: relative; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; }
+        .bar-fill { position: absolute; bottom: 0; width: 100%; transition: height 0.05s ease-out; }
+        .bar-label { font-size: 10px; font-weight: bold; text-align: center; text-transform: uppercase; }
+
+        .main-controls { 
+            margin-top: 25px; 
+            display: flex; 
+            gap: 25px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 8px; min-width: 150px; }
+        .button-group { display: flex; gap: 10px; }
+        
+        button { 
+            padding: 12px 24px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            transition: all 0.2s;
+        }
+
+        .btn-play { background: var(--success); color: white; }
+        .btn-pause { background: var(--warning); color: white; }
+        .btn-reset { background: var(--primary); color: white; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        input[type=range] { width: 100%; cursor: pointer; }
+        label { font-size: 0.9rem; font-weight: 600; }
+
+        .notice-box {
+            margin-top: 25px;
+            padding: 15px 25px;
+            background: #e8f4fd;
+            border-left: 5px solid var(--accent);
+            border-radius: 6px;
+            max-width: 750px;
+            text-align: center;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin-top: 0;">Simulador de Conservação de Energia - José Gonçalves (eufisica)</h2>
+
+    <div class="dashboard">
+        <div class="data-card" style="background: #ffe9e9; color: var(--danger);">E<sub>p</sub>= <span id="uVal">0</span> J</div>
+        <div class="data-card" style="background: #e9f5ff; color: var(--accent);">E<sub>c</sub>= <span id="kVal">0</span> J</div>
+        <div class="data-card" style="background: #e9fff0; color: var(--success);">E<sub>m</sub>= <span id="eVal">0</span> J</div>
+        <div class="data-card" style="background: #fff9e9; color: var(--warning);">E<sub>d</sub>= <span id="tVal">0</span> J</div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="sim" width="800" height="400"></canvas>
+        
+        <div class="bars">
+            <div class="bar-group">
+                <div class="bar-label">Potencial</div>
+                <div class="bar-container"><div id="uBar" class="bar-fill" style="background: var(--danger);"></div></div>
+            </div>
+            <div class="bar-group">
+                <div class="bar-label">Cinética</div>
+                <div class="bar-container"><div id="kBar" class="bar-fill" style="background: var(--accent);"></div></div>
+            </div>
+            <div class="bar-group">
+                <div class="bar-label">Mecânica</div>
+                <div class="bar-container"><div id="eBar" class="bar-fill" style="background: var(--success);"></div></div>
+            </div>
+            <div class="bar-group">
+                <div class="bar-label">Dissipada</div>
+                <div class="bar-container"><div id="tBar" class="bar-fill" style="background: var(--warning);"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-controls">
+        <div class="button-group">
+            <button id="playPauseBtn" class="btn-pause">Pausar</button>
+            <button id="resetBtn" class="btn-reset">Reiniciar</button>
+        </div>
+
+        <div class="control-group">
+            <label>Gravidade, <i>g</i>= <span id="gLabel">9.8</span> m/s²</label>
+            <input type="range" id="gRange" min="1" max="20" step="0.1" value="9.8">
+        </div>
+
+        <div class="control-group">
+            <label>Massa, <i>m</i>= <span id="mLabel">1.0</span> kg</label>
+            <input type="range" id="mRange" min="0.1" max="5" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <label>Atrito, <i>μ</i>= <span id="fLabel">0.00</span></label>
+            <input type="range" id="fRange" min="0" max="0.5" step="0.01" value="0.00">
+        </div>
+    </div>
+
+    <div class="notice-box">
+        <strong>💡 Instruções de Interação:</strong> Pode ajustar livremente os parâmetros da simulação através dos controlos deslizantes (Massa, Gravidade e Atrito). Além disso, pode usar o rato para <strong>arrastar os pontos vermelhos</strong> nas extremidades de modo a alterar as alturas dos planos inclinados e <strong>arrastar a esfera azul</strong> para escolher qual a posição e altura em que iniciará o movimento.
+    </div>
+
+<script>
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+
+    let isPlaying = true;
+    let g = 9.8;
+    let mass = 1.0;
+    let mu = 0.00;
+    let thermalEnergy = 0;
+    let initialMechanicEnergy = 0; 
+    const pxToMeter = 50; 
+    const groundY = 350; 
+    const dt = 0.016; // Passo de tempo fixo estável para integração numérica
+
+    let points = [
+        { x: 50,  y: 100 }, 
+        { x: 250, y: groundY }, 
+        { x: 550, y: groundY }, 
+        { x: 750, y: 120 }  
+    ];
+
+    let ball = { x: 50, y: 100, sVel: 0, radius: 12 };
+    let isDraggingBall = false;
+    let activePoint = null;
+
+    function getTrackData(x) {
+        if (x <= points[0].x) return { y: points[0].y, slope: 0, segment: 0 };
+        if (x >= points[3].x) return { y: points[3].y, slope: 0, segment: 2 };
+
+        for (let i = 0; i < points.length - 1; i++) {
+            if (x >= points[i].x && x <= points[i+1].x) {
+                let p1 = points[i];
+                let p2 = points[i+1];
+                let slope = (p2.y - p1.y) / (p2.x - p1.x);
+                let y = p1.y + slope * (x - p1.x);
+                return { y: y, slope: slope, segment: i };
+            }
+        }
+    }
+
+    function xToS(x) {
+        let s = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+            let p1 = points[i];
+            let p2 = points[i+1];
+            let segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+            if (x >= p1.x && x <= p2.x) {
+                let pct = (x - p1.x) / (p2.x - p1.x);
+                s += pct * segLen;
+                break;
+            } else {
+                s += segLen;
+            }
+        }
+        return s;
+    }
+
+    function sToX(s) {
+        let currentS = 0;
+        if (s <= 0) return points[0].x;
+        
+        for (let i = 0; i < points.length - 1; i++) {
+            let p1 = points[i];
+            let p2 = points[i+1];
+            let segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+            if (currentS + segLen >= s) {
+                let rem = s - currentS;
+                let pct = rem / segLen;
+                return p1.x + pct * (p2.x - p1.x);
+            }
+            currentS += segLen;
+        }
+        return points[3].x;
+    }
+
+    function resetEnergyReference() {
+        let h = Math.max(0, (groundY - ball.y) / pxToMeter);
+        initialMechanicEnergy = mass * g * h;
+        thermalEnergy = 0;
+    }
+
+    function update() {
+        if (isPlaying && !isDraggingBall && !activePoint) {
+            let track = getTrackData(ball.x);
+            
+            // Força gravítica ao longo da rampa: Fg = -m * g * sen(theta)
+            // Nota: o declive matemático (slope) invertido mapeia a descida física
+            let angle = Math.atan(track.slope);
+            let cosTheta = Math.abs(Math.cos(angle));
+            
+            // Forças aplicadas vertidas em termos de aceleração linear (m/s^2 em pixels)
+            let accelGrav = g * Math.sin(angle) * pxToMeter;
+            let accelFric = mu * g * cosTheta * pxToMeter;
+
+            // Aplicação vetorial do atrito contrária ao vetor velocidade atual
+            let frictionForce = 0;
+            if (Math.abs(ball.sVel) > 0.01) {
+                frictionForce = -Math.sign(ball.sVel) * accelFric;
+            }
+
+            // Integração pura de Euler-Cromer (Altamente estável para inversões de sentido)
+            ball.sVel += (accelGrav + frictionForce) * dt;
+
+            // Deslocamento escalar ao longo da pista
+            let currentS = xToS(ball.x);
+            let nextS = currentS + ball.sVel * dt;
+
+            // Atualização coordenada
+            ball.x = sToX(nextS);
+
+            // Batimento perfeito elástico nas bordas físicas da pista
+            if (ball.x <= points[0].x) { ball.x = points[0].x; ball.sVel = -ball.sVel; }
+            if (ball.x >= points[3].x) { ball.x = points[3].x; ball.sVel = -ball.sVel; }
+
+            let nextTrack = getTrackData(ball.x);
+            ball.y = nextTrack.y;
+
+            // Acumulação do trabalho de atrito dissipado em calor
+            let ds = Math.abs(nextS - currentS) / pxToMeter;
+            thermalEnergy += mu * mass * g * cosTheta * ds;
+
+            // Condição de imobilização por atrito no fundo plano
+            if (track.slope === 0 && Math.abs(ball.sVel) < 0.3 && mu > 0) {
+                ball.sVel = 0;
+            }
+        }
+
+        draw();
+        updateUI();
+        requestAnimationFrame(update);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.beginPath();
+        ctx.lineWidth = 5; ctx.strokeStyle = '#2c3e50';
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
+        ctx.setLineDash([]);
+
+        [points[0], points[3]].forEach(p => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
+            ctx.fillStyle = '#e74c3c'; ctx.fill();
+            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2; ctx.stroke();
+        });
+
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y - ball.radius, ball.radius, 0, Math.PI*2);
+        ctx.fillStyle = '#3498db'; ctx.fill(); 
+        ctx.strokeStyle = '#2980b9'; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    function updateUI() {
+        let h = Math.max(0, (groundY - ball.y) / pxToMeter);
+        let ep = mass * g * h;
+        
+        // Determinação matemática sem perdas: a energia mecânica total atual decresce apenas com o calor
+        let emec = Math.max(0, initialMechanicEnergy - thermalEnergy);
+        let ek = Math.max(0, emec - ep);
+        
+        // Se mu == 0, força estabilização analítica absoluta para evitar o ruído visual do deltaTime
+        if (mu === 0) {
+            emec = initialMechanicEnergy;
+            ek = Math.max(0, emec - ep);
+        }
+
+        document.getElementById('uVal').innerText = ep.toFixed(1);
+        document.getElementById('kVal').innerText = ek.toFixed(1);
+        document.getElementById('eVal').innerText = emec.toFixed(1);
+        document.getElementById('tVal').innerText = thermalEnergy.toFixed(1);
+
+        let maxDisplayE = Math.max(10, initialMechanicEnergy);
+        document.getElementById('uBar').style.height = (ep / maxDisplayE * 100) + '%';
+        document.getElementById('kBar').style.height = (ek / maxDisplayE * 100) + '%';
+        document.getElementById('eBar').style.height = (emec / maxDisplayE * 100) + '%';
+        document.getElementById('tBar').style.height = (thermalEnergy / maxDisplayE * 100) + '%';
+    }
+
+    document.getElementById('playPauseBtn').onclick = function() {
+        isPlaying = !isPlaying;
+        this.innerText = isPlaying ? "Pausar" : "Continuar";
+        this.className = isPlaying ? "btn-pause" : "btn-play";
+    };
+
+    document.getElementById('resetBtn').onclick = function() {
+        ball.x = points[0].x;
+        ball.y = points[0].y;
+        ball.sVel = 0;
+        resetEnergyReference();
+    };
+
+    canvas.onmousedown = (e) => {
+        let rect = canvas.getBoundingClientRect();
+        let mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        
+        if (Math.hypot(mx - ball.x, my - (ball.y - ball.radius)) < 22) { 
+            isDraggingBall = true; 
+            ball.sVel = 0; 
+            return; 
+        }
+        
+        [0, 3].forEach(idx => {
+            if (Math.hypot(mx - points[idx].x, my - points[idx].y) < 18) activePoint = points[idx];
+        });
+    };
+
+    window.onmousemove = (e) => {
+        let rect = canvas.getBoundingClientRect();
+        let mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        
+        if (isDraggingBall) {
+            ball.x = Math.max(points[0].x, Math.min(mx, points[3].x));
+            ball.y = getTrackData(ball.x).y;
+            resetEnergyReference(); 
+        } else if (activePoint) {
+            activePoint.y = Math.max(50, Math.min(my, groundY - 20));
+            ball.y = getTrackData(ball.x).y;
+            resetEnergyReference(); 
+        }
+    };
+
+    window.onmouseup = () => { isDraggingBall = false; activePoint = null; };
+
+    document.getElementById('gRange').oninput = (e) => {
+        g = parseFloat(e.target.value); document.getElementById('gLabel').innerText = g;
+        resetEnergyReference();
+    };
+    document.getElementById('mRange').oninput = (e) => {
+        mass = parseFloat(e.target.value); document.getElementById('mLabel').innerText = mass.toFixed(1);
+        resetEnergyReference();
+    };
+    document.getElementById('fRange').oninput = (e) => {
+        mu = parseFloat(e.target.value); document.getElementById('fLabel').innerText = mu.toFixed(2);
+        resetEnergyReference();
+    };
+
+    document.getElementById('fRange').value = 0;
+
+    resetEnergyReference();
+    update();
+</script>
+</body>
+</html>
