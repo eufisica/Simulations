@@ -1,0 +1,662 @@
+{
+    "Grupo A": [
+        {
+            "eq1": "México",
+            "g1": 1,
+            "eq2": "Coreia do Sul",
+            "g2": 0
+        },
+        {
+            "eq1": "Chéquia",
+            "g1": 1,
+            "eq2": "África do Sul",
+            "g2": 1
+        },
+        {
+            "eq1": "México",
+            "g1": "",
+            "eq2": "Chéquia",
+            "g2": ""
+        },
+        {
+            "eq1": "África do Sul",
+            "g1": "",
+            "eq2": "Coreia do Sul",
+            "g2": ""
+        },
+        {
+            "eq1": "África do Sul",
+            "g1": 0,
+            "eq2": "México",
+            "g2": 2
+        },
+        {
+            "eq1": "Coreia do Sul",
+            "g1": 2,
+            "eq2": "Chéquia",
+            "g2": 1
+        }
+    ],
+    "Grupo B": [
+        {
+            "eq1": "Canadá",
+            "g1": "",
+            "eq2": "Suíça",
+            "g2": ""
+        },
+        {
+            "eq1": "Bósnia & Herzegovina",
+            "g1": "",
+            "eq2": "Catar",
+            "g2": ""
+        },
+        {
+            "eq1": "Canadá",
+            "g1": 1,
+            "eq2": "Bósnia & Herzegovina",
+            "g2": 1
+        },
+        {
+            "eq1": "Catar",
+            "g1": 1,
+            "eq2": "Suíça",
+            "g2": 1
+        },
+        {
+            "eq1": "Catar",
+            "g1": 0,
+            "eq2": "Canadá",
+            "g2": 6
+        },
+        {
+            "eq1": "Suíça",
+            "g1": 4,
+            "eq2": "Bósnia & Herzegovina",
+            "g2": 1
+        }
+    ],
+    "Grupo C": [
+        {
+            "eq1": "Brasil",
+            "g1": 1,
+            "eq2": "Marrocos",
+            "g2": 1
+        },
+        {
+            "eq1": "Escócia",
+            "g1": 0,
+            "eq2": "Haiti",
+            "g2": 1
+        },
+        {
+            "eq1": "Brasil",
+            "g1": "",
+            "eq2": "Escócia",
+            "g2": ""
+        },
+        {
+            "eq1": "Haiti",
+            "g1": "",
+            "eq2": "Marrocos",
+            "g2": ""
+        },
+        {
+            "eq1": "Haiti",
+            "g1": 0,
+            "eq2": "Brasil",
+            "g2": 3
+        },
+        {
+            "eq1": "Marrocos",
+            "g1": 1,
+            "eq2": "Escócia",
+            "g2": 0
+        }
+    ],
+    "Grupo D": [
+        {
+            "eq1": "EUA",
+            "g1": 2,
+            "eq2": "Austrália",
+            "g2": 0
+        },
+        {
+            "eq1": "Paraguai",
+            "g1": 1,
+            "eq2": "Turquia",
+            "g2": 0
+        },
+        {
+            "eq1": "EUA",
+            "g1": 4,
+            "eq2": "Paraguai",
+            "g2": 1
+        },
+        {
+            "eq1": "Turquia",
+            "g1": 0,
+            "eq2": "Austrália",
+            "g2": 2
+        },
+        {
+            "eq1": "Turquia",
+            "g1": "",
+            "eq2": "EUA",
+            "g2": ""
+        },
+        {
+            "eq1": "Austrália",
+            "g1": "",
+            "eq2": "Paraguai",
+            "g2": ""
+        }
+    ],
+    "Grupo E": [
+        {
+            "eq1": "Alemanha",
+            "g1": 2,
+            "eq2": "Costa do Marfim",
+            "g2": 1
+        },
+        {
+            "eq1": "Equador",
+            "g1": 0,
+            "eq2": "Curaçao",
+            "g2": 0
+        },
+        {
+            "eq1": "Alemanha",
+            "g1": "",
+            "eq2": "Equador",
+            "g2": ""
+        },
+        {
+            "eq1": "Curaçao",
+            "g1": "",
+            "eq2": "Costa do Marfim",
+            "g2": ""
+        },
+        {
+            "eq1": "Curaçao",
+            "g1": 1,
+            "eq2": "Alemanha",
+            "g2": 7
+        },
+        {
+            "eq1": "Costa do Marfim",
+            "g1": 1,
+            "eq2": "Equador",
+            "g2": 0
+        }
+    ],
+    "Grupo F": [
+        {
+            "eq1": "Países Baixos",
+            "g1": 2,
+            "eq2": "Japão",
+            "g2": 2
+        },
+        {
+            "eq1": "Suécia",
+            "g1": 5,
+            "eq2": "Tunísia",
+            "g2": 1
+        },
+        {
+            "eq1": "Países Baixos",
+            "g1": 5,
+            "eq2": "Suécia",
+            "g2": 1
+        },
+        {
+            "eq1": "Tunísia",
+            "g1": 0,
+            "eq2": "Japão",
+            "g2": 4
+        },
+        {
+            "eq1": "Tunísia",
+            "g1": "",
+            "eq2": "Países Baixos",
+            "g2": ""
+        },
+        {
+            "eq1": "Japão",
+            "g1": "",
+            "eq2": "Suécia",
+            "g2": ""
+        }
+    ],
+    "Grupo G": [
+        {
+            "eq1": "Egito",
+            "g1": "",
+            "eq2": "Irão",
+            "g2": ""
+        },
+        {
+            "eq1": "Bélgica",
+            "g1": "",
+            "eq2": "Nova Zelândia",
+            "g2": ""
+        },
+        {
+            "eq1": "Egito",
+            "g1": 1,
+            "eq2": "Bélgica",
+            "g2": 1
+        },
+        {
+            "eq1": "Nova Zelândia",
+            "g1": 2,
+            "eq2": "Irão",
+            "g2": 2
+        },
+        {
+            "eq1": "Nova Zelândia",
+            "g1": 1,
+            "eq2": "Egito",
+            "g2": 3
+        },
+        {
+            "eq1": "Irão",
+            "g1": 0,
+            "eq2": "Bélgica",
+            "g2": 0
+        }
+    ],
+    "Grupo H": [
+        {
+            "eq1": "Espanha",
+            "g1": "",
+            "eq2": "Uruguai",
+            "g2": ""
+        },
+        {
+            "eq1": "Cabo Verde",
+            "g1": "",
+            "eq2": "Arábia Saudita",
+            "g2": ""
+        },
+        {
+            "eq1": "Espanha",
+            "g1": 0,
+            "eq2": "Cabo Verde",
+            "g2": 0
+        },
+        {
+            "eq1": "Arábia Saudita",
+            "g1": 1,
+            "eq2": "Uruguai",
+            "g2": 1
+        },
+        {
+            "eq1": "Arábia Saudita",
+            "g1": 0,
+            "eq2": "Espanha",
+            "g2": 4
+        },
+        {
+            "eq1": "Uruguai",
+            "g1": 2,
+            "eq2": "Cabo Verde",
+            "g2": 2
+        }
+    ],
+    "Grupo I": [
+        {
+            "eq1": "França",
+            "g1": "",
+            "eq2": "Noruega",
+            "g2": ""
+        },
+        {
+            "eq1": "Senegal",
+            "g1": "",
+            "eq2": "Iraque",
+            "g2": ""
+        },
+        {
+            "eq1": "França",
+            "g1": 3,
+            "eq2": "Senegal",
+            "g2": 1
+        },
+        {
+            "eq1": "Iraque",
+            "g1": 1,
+            "eq2": "Noruega",
+            "g2": 4
+        },
+        {
+            "eq1": "Iraque",
+            "g1": 0,
+            "eq2": "França",
+            "g2": 3
+        },
+        {
+            "eq1": "Noruega",
+            "g1": 3,
+            "eq2": "Senegal",
+            "g2": 2
+        }
+    ],
+    "Grupo J": [
+        {
+            "eq1": "Argentina",
+            "g1": 2,
+            "eq2": "Áustria",
+            "g2": 0
+        },
+        {
+            "eq1": "Argélia",
+            "g1": 2,
+            "eq2": "Jordânia",
+            "g2": 1
+        },
+        {
+            "eq1": "Argentina",
+            "g1": 3,
+            "eq2": "Argélia",
+            "g2": 0
+        },
+        {
+            "eq1": "Jordânia",
+            "g1": 1,
+            "eq2": "Áustria",
+            "g2": 3
+        },
+        {
+            "eq1": "Jordânia",
+            "g1": "",
+            "eq2": "Argentina",
+            "g2": ""
+        },
+        {
+            "eq1": "Áustria",
+            "g1": "",
+            "eq2": "Argélia",
+            "g2": ""
+        }
+    ],
+    "Grupo K": [
+        {
+            "eq1": "Colômbia",
+            "g1": "",
+            "eq2": "Portugal",
+            "g2": ""
+        },
+        {
+            "eq1": "Congo",
+            "g1": "",
+            "eq2": "Uzbequistão",
+            "g2": ""
+        },
+        {
+            "eq1": "Colômbia",
+            "g1": 1,
+            "eq2": "Congo",
+            "g2": 0
+        },
+        {
+            "eq1": "Uzbequistão",
+            "g1": 0,
+            "eq2": "Portugal",
+            "g2": 5
+        },
+        {
+            "eq1": "Uzbequistão",
+            "g1": 1,
+            "eq2": "Colômbia",
+            "g2": 3
+        },
+        {
+            "eq1": "Portugal",
+            "g1": 1,
+            "eq2": "Congo",
+            "g2": 1
+        }
+    ],
+    "Grupo L": [
+        {
+            "eq1": "Inglaterra",
+            "g1": 0,
+            "eq2": "Gana",
+            "g2": 0
+        },
+        {
+            "eq1": "Croácia",
+            "g1": "",
+            "eq2": "Panamá",
+            "g2": ""
+        },
+        {
+            "eq1": "Inglaterra",
+            "g1": 4,
+            "eq2": "Croácia",
+            "g2": 2
+        },
+        {
+            "eq1": "Panamá",
+            "g1": 0,
+            "eq2": "Gana",
+            "g2": 1
+        },
+        {
+            "eq1": "Panamá",
+            "g1": "",
+            "eq2": "Inglaterra",
+            "g2": ""
+        },
+        {
+            "eq1": "Gana",
+            "g1": "",
+            "eq2": "Croácia",
+            "g2": ""
+        }
+    ],
+    "Dezasseis-avos (R32)": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ],
+    "Oitavos-de-final": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ],
+    "Quartos-de-final": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ],
+    "Meias-finais": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        },
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ],
+    "Terceiro Lugar": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ],
+    "FINAL": [
+        {
+            "eq1": "Classificado A",
+            "g1": "",
+            "eq2": "Classificado B",
+            "g2": ""
+        }
+    ]
+}
