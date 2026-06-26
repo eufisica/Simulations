@@ -14,15 +14,15 @@
         },
         {
             "eq1": "México",
-            "g1": "",
+            "g1": 3,
             "eq2": "Chéquia",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "África do Sul",
-            "g1": "",
+            "g1": 1,
             "eq2": "Coreia do Sul",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "África do Sul",
@@ -40,15 +40,15 @@
     "Grupo B": [
         {
             "eq1": "Canadá",
-            "g1": "",
+            "g1": 1,
             "eq2": "Suíça",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Bósnia & Herzegovina",
-            "g1": "",
+            "g1": 3,
             "eq2": "Catar",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Canadá",
@@ -90,15 +90,15 @@
         },
         {
             "eq1": "Brasil",
-            "g1": "",
+            "g1": 3,
             "eq2": "Escócia",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "Haiti",
-            "g1": "",
+            "g1": 2,
             "eq2": "Marrocos",
-            "g2": ""
+            "g2": 4
         },
         {
             "eq1": "Haiti",
@@ -140,15 +140,15 @@
         },
         {
             "eq1": "Turquia",
-            "g1": "",
+            "g1": 3,
             "eq2": "EUA",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Austrália",
-            "g1": "",
+            "g1": 0,
             "eq2": "Paraguai",
-            "g2": ""
+            "g2": 0
         }
     ],
     "Grupo E": [
@@ -166,15 +166,15 @@
         },
         {
             "eq1": "Alemanha",
-            "g1": "",
+            "g1": 1,
             "eq2": "Equador",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Curaçao",
-            "g1": "",
+            "g1": 0,
             "eq2": "Costa do Marfim",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Curaçao",
@@ -216,15 +216,15 @@
         },
         {
             "eq1": "Tunísia",
-            "g1": "",
+            "g1": 1,
             "eq2": "Países Baixos",
-            "g2": ""
+            "g2": 3
         },
         {
             "eq1": "Japão",
-            "g1": "",
+            "g1": 1,
             "eq2": "Suécia",
-            "g2": ""
+            "g2": 1
         }
     ],
     "Grupo G": [
@@ -426,9 +426,9 @@
         },
         {
             "eq1": "Croácia",
-            "g1": "",
+            "g1": 1,
             "eq2": "Panamá",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "Inglaterra",
@@ -457,205 +457,205 @@
     ],
     "Dezasseis-avos (R32)": [
         {
-            "eq1": "Classificado A",
+            "eq1": "África do Sul",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Canadá",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Alemanha",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Coreia do Sul",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "França",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Haiti",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Brasil",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Japão",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Países Baixos",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Marrocos",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Espanha",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Áustria",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Argentina",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Uruguai",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "EUA",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Bósnia & Herzegovina",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Egito",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Suécia",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Suíça",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Equador",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Costa do Marfim",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Noruega",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "México",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Cabo Verde",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Inglaterra",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Bélgica",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Austrália",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Irão",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Colômbia",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Senegal",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Portugal",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Gana",
             "g2": ""
         }
     ],
     "Oitavos-de-final": [
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 73",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 74",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 75",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 76",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 77",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 78",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 79",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 80",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 81",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 82",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 83",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 84",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 85",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 86",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo 87",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo 88",
             "g2": ""
         }
     ],
     "Quartos-de-final": [
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Oit.1",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Oit.2",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Oit.3",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Oit.4",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Oit.5",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Oit.6",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Oit.7",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Oit.8",
             "g2": ""
         }
     ],
     "Meias-finais": [
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Q.1",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Q.2",
             "g2": ""
         },
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Q.3",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Q.4",
             "g2": ""
         }
     ],
     "Terceiro Lugar": [
         {
-            "eq1": "Classificado A",
+            "eq1": "Derr. Jogo Meia 1",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Derr. Jogo Meia 2",
             "g2": ""
         }
     ],
     "FINAL": [
         {
-            "eq1": "Classificado A",
+            "eq1": "Venc. Jogo Meia 1",
             "g1": "",
-            "eq2": "Classificado B",
+            "eq2": "Venc. Jogo Meia 2",
             "g2": ""
         }
     ]
