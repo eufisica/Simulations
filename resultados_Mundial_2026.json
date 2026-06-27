@@ -230,15 +230,15 @@
     "Grupo G": [
         {
             "eq1": "Egito",
-            "g1": "",
+            "g1": 1,
             "eq2": "Irão",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Bélgica",
-            "g1": "",
+            "g1": 5,
             "eq2": "Nova Zelândia",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Egito",
@@ -268,15 +268,15 @@
     "Grupo H": [
         {
             "eq1": "Espanha",
-            "g1": "",
+            "g1": 0,
             "eq2": "Uruguai",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Cabo Verde",
-            "g1": "",
+            "g1": 0,
             "eq2": "Arábia Saudita",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "Espanha",
@@ -306,15 +306,15 @@
     "Grupo I": [
         {
             "eq1": "França",
-            "g1": "",
+            "g1": 4,
             "eq2": "Noruega",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Senegal",
-            "g1": "",
+            "g1": 5,
             "eq2": "Iraque",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "França",
@@ -487,7 +487,7 @@
             "g2": ""
         },
         {
-            "eq1": "Espanha",
+            "eq1": "Uruguai",
             "g1": "",
             "eq2": "Áustria",
             "g2": ""
@@ -495,7 +495,7 @@
         {
             "eq1": "Argentina",
             "g1": "",
-            "eq2": "Uruguai",
+            "eq2": "Espanha",
             "g2": ""
         },
         {
@@ -505,7 +505,7 @@
             "g2": ""
         },
         {
-            "eq1": "Egito",
+            "eq1": "Bélgica",
             "g1": "",
             "eq2": "Suécia",
             "g2": ""
@@ -531,13 +531,13 @@
         {
             "eq1": "Inglaterra",
             "g1": "",
-            "eq2": "Bélgica",
+            "eq2": "Irão",
             "g2": ""
         },
         {
             "eq1": "Austrália",
             "g1": "",
-            "eq2": "Irão",
+            "eq2": "Egito",
             "g2": ""
         },
         {
