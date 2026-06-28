@@ -368,29 +368,29 @@
         },
         {
             "eq1": "Jordânia",
-            "g1": "",
+            "g1": 1,
             "eq2": "Argentina",
-            "g2": ""
+            "g2": 3
         },
         {
             "eq1": "Áustria",
-            "g1": "",
+            "g1": 3,
             "eq2": "Argélia",
-            "g2": ""
+            "g2": 3
         }
     ],
     "Grupo K": [
         {
             "eq1": "Colômbia",
-            "g1": "",
+            "g1": 0,
             "eq2": "Portugal",
-            "g2": ""
+            "g2": 0
         },
         {
             "eq1": "Congo",
-            "g1": "",
+            "g1": 3,
             "eq2": "Uzbequistão",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Colômbia",
@@ -444,15 +444,15 @@
         },
         {
             "eq1": "Panamá",
-            "g1": "",
+            "g1": 0,
             "eq2": "Inglaterra",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Gana",
-            "g1": "",
+            "g1": 1,
             "eq2": "Croácia",
-            "g2": ""
+            "g2": 2
         }
     ],
     "Dezasseis-avos (R32)": [
@@ -549,7 +549,7 @@
         {
             "eq1": "Portugal",
             "g1": "",
-            "eq2": "Gana",
+            "eq2": "Croácia",
             "g2": ""
         }
     ],
