@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador ATLAS 3D - LHC</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050510;
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            letter-spacing: 2px;
+            color: #00d2ff;
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 14px;
+            color: #8a99ad;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #005c97, #363795);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #0072b5, #4a4bc4);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 210, 255, 0.5);
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            background: rgba(5, 5, 15, 0.85);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 12px;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            font-size: 12px;
+            color: #64748b;
+            text-align: right;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="ui-overlay">
+        <h1>ATLAS 3D EVENT DISPLAY</h1>
+        <div class="subtitle">Simulação Espacial de Colisão de Hadrões</div>
+    </div>
+
+    <div class="instructions">
+        Arrasta com o Rato para Rodar a Câmara<br>
+        Scroll para Zoom
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div class="controls">
+        <button id="collideBtn">DESENCADEAR COLISÃO (LHC)</button>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="color-box" style="background: #ff3366;"></div> Eletrões</div>
+            <div class="legend-item"><div class="color-box" style="background: #33ff66;"></div> Jatos/Hadrões</div>
+            <div class="legend-item"><div class="color-box" style="background: #3388ff;"></div> Muões</div>
+            <div class="legend-item"><div class="color-box" style="background: #ffff33;"></div> Neutrinos (Em falta)</div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO INICIAL THREE.JS ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050510, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 10, 20);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Iluminação rápida
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0x00d2ff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        // --- ADAPTABILIDADE AUTOMÁTICA (RESPONSIVIDADE) ---
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- GEOMETRIA DO DETETOR ATLAS (Cilindros Transparentes) ---
+        const detectorGroup = new THREE.Group();
+        scene.add(detectorGroup);
+
+        function createDetectorLayer(radius, length, color, opacity) {
+            const geometry = new THREE.CylinderGeometry(radius, radius, length, 32, 1, true);
+            const material = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                wireframe: true
+            });
+            const cylinder = new THREE.Mesh(geometry, material);
+            cylinder.rotation.z = Math.PI / 2; // Alinhar com o eixo do feixe (X)
+            detectorGroup.add(cylinder);
+        }
+
+        // Camadas concêntricas (Raios representativos)
+        createDetectorLayer(2.5, 12, 0x1f3a60, 0.15); // Detetor Interno
+        createDetectorLayer(4.5, 12, 0x3b2040, 0.1);  // Calorímetro EM
+        createDetectorLayer(6.5, 14, 0x1c3d27, 0.08); // Calorímetro Hadrónico
+        createDetectorLayer(9.0, 18, 0x1d3557, 0.05); // Espetrómetro de Muões
+
+        // Tubo do Feixe (Beam Pipe)
+        const beamGeom = new THREE.CylinderGeometry(0.1, 0.1, 30, 16);
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0x333344 });
+        const beamPipe = new THREE.Mesh(beamGeom, beamMat);
+        beamPipe.rotation.z = Math.PI / 2;
+        scene.add(beamPipe);
+
+        // --- SISTEMA DE PARTÍCULAS ---
+        let particles = [];
+        let protons = [];
+        let animationState = 'idle';
+
+        const particleColors = {
+            electron: 0xff3366,
+            hadron: 0x33ff66,
+            muon: 0x3388ff,
+            neutrino: 0xffff33
+        };
+
+        class Proton {
+            constructor(direction) {
+                this.direction = direction; // 1 ou -1
+                const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.set(direction * 15, 0, 0);
+                scene.add(this.mesh);
+            }
+            update() {
+                this.mesh.position.x -= this.direction * 0.4;
+            }
+            destroy() {
+                scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        class Track3D {
+            constructor(type) {
+                this.type = type;
+                this.color = particleColors[type];
+                
+                // Vetor de direção aleatório (esfera unitária)
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.acos((Math.random() * 2) - 1);
+                
+                this.dirX = Math.sin(theta) * Math.cos(phi);
+                this.dirY = Math.sin(theta) * Math.sin(phi);
+                this.dirZ = Math.cos(theta);
+
+                this.speed = 0.15 + Math.random() * 0.1;
+                this.radiusFilled = 0;
+                
+                // Determina o limite cilíndrico de paragem
+                if (type === 'electron') this.maxRadius = 4.5;
+                else if (type === 'hadron') this.maxRadius = 6.5;
+                else this.maxRadius = 9.0; // Muões e neutrinos vão até ao fim
+
+                // Efeito de curvatura magnética (Apenas no detetor central, raio < 2.5)
+                this.charge = Math.random() > 0.5 ? 1 : -1;
+                this.curveFactor = (type === 'electron' ? 0.3 : type === 'hadron' ? 0.15 : 0.04) * this.charge;
+
+                // Criação da linha dinâmica no Three.js
+                this.maxPoints = 100;
+                this.positions = new Float32Array(this.maxPoints * 3);
+                this.positions[0] = 0; this.positions[1] = 0; this.positions[2] = 0; // Ponto de colisão inicial (0,0,0)
+                
+                this.geometry = new THREE.BufferGeometry();
+                this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+                
+                this.material = new THREE.LineBasicMaterial({
+                    color: this.color,
+                    linewidth: 2, // Nota: Linewidth > 1 geralmente não é suportado por WebGL nativo em Windows, usamos transparência/cor forte
+                    transparent: type === 'neutrino',
+                    opacity: type === 'neutrino' ? 0.3 : 1.0
+                });
+
+                this.line = new THREE.Line(this.geometry, this.material);
+                scene.add(this.line);
+                
+                this.pointCount = 1;
+            }
+
+            update() {
+                if (this.radiusFilled >= this.maxRadius) return;
+
+                this.radiusFilled += this.speed;
+                if (this.radiusFilled > this.maxRadius) this.radiusFilled = this.maxRadius;
+
+                // Equações paramétricas com rotação/curvatura magnética simulada sobre o eixo X
+                let currentAngle = 0;
+                if (this.radiusFilled < 2.5) {
+                    currentAngle = this.curveFactor * this.radiusFilled;
+                } else {
+                    currentAngle = this.curveFactor * 2.5; // Segue tangente fora do campo magnético central
+                }
+
+                // Rotacionar os vetores Y e Z para criar o traço curvo helicoidal
+                const rotY = this.dirY * Math.cos(currentAngle) - this.dirZ * Math.sin(currentAngle);
+                const rotZ = this.dirY * Math.sin(currentAngle) + this.dirZ * Math.cos(currentAngle);
+
+                const newX = this.dirX * this.radiusFilled;
+                const newY = rotY * this.radiusFilled;
+                const newZ = rotZ * this.radiusFilled;
+
+                if (this.pointCount < this.maxPoints) {
+                    const idx = this.pointCount * 3;
+                    this.positions[idx] = newX;
+                    this.positions[idx + 1] = newY;
+                    this.positions[idx + 2] = newZ;
+                    
+                    // Atualizar apenas a contagem visível do buffer
+                    this.geometry.setDrawRange(0, this.pointCount + 1);
+                    this.geometry.attributes.position.needsUpdate = true;
+                    this.pointCount++;
+                }
+            }
+
+            destroy() {
+                scene.remove(this.line);
+                this.geometry.dispose();
+                this.material.dispose();
+            }
+        }
+
+        // --- LOOP DE ANIMAÇÃO ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // Rotação suave do detetor para dar efeito dinâmico tridimensional
+            detectorGroup.rotation.x += 0.001;
+
+            if (animationState === 'injecting') {
+                protons.forEach(p => p.update());
+
+                // Cruzamento no centro (X = 0)
+                if (protons[0].mesh.position.x <= 0) {
+                    protons.forEach(p => p.destroy());
+                    protons = [];
+                    animationState = 'collided';
+                    triggerCollisionPhysics();
+                }
+            } else if (animationState === 'collided') {
+                particles.forEach(p => p.update());
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function triggerCollisionPhysics() {
+            // Limpar física anterior
+            particles.forEach(p => p.destroy());
+            particles = [];
+
+            // Gerar multiplicidade de partículas (jatos realistas)
+            const counts = { electron: 2, muon: 2, hadron: 15, neutrino: 2 };
+            
+            for (const [type, count] of Object.entries(counts)) {
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Track3D(type));
+                }
+            }
+        }
+
+        // Ouvinte do Botão
+        document.getElementById('collideBtn').addEventListener('click', () => {
+            if (protons.length > 0) protons.forEach(p => p.destroy());
+            protons = [new Proton(1), new Proton(-1)];
+            animationState = 'injecting';
+        });
+
+        // Inicializar loop
+        animate();
+    </script>
+</body>
+</html>

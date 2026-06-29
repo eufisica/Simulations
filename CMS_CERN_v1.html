@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador CMS 3D - LHC</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #030308;
+            color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            letter-spacing: 2px;
+            color: #ffaa00;
+            text-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 14px;
+            color: #a3b0c2;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #c31432, #240b36);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 100, 0, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #e52d27, #b31045);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 100, 0, 0.5);
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            background: rgba(10, 5, 5, 0.85);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 170, 0, 0.2);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            font-size: 12px;
+            color: #64748b;
+            text-align: right;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="ui-overlay">
+        <h1>CMS 3D EVENT DISPLAY</h1>
+        <div class="subtitle">Solenoide de Compacto de Muões (B = 3.8T) — Resposta Responsiva</div>
+    </div>
+
+    <div class="instructions">
+        Arrasta com o Rato para Rodar<br>
+        Scroll para Zoom
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div class="controls">
+        <button id="collideBtn">COLIDIR PROTÕES (CMS)</button>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="color-box" style="background: #ff3366;"></div> Eletrões (ECAL)</div>
+            <div class="legend-item"><div class="color-box" style="background: #33ff66;"></div> Hadrões (HCAL)</div>
+            <div class="legend-item"><div class="color-box" style="background: #3388ff;"></div> Muões (Inversão de Curvatura fora do Íman)</div>
+            <div class="legend-item"><div class="color-box" style="background: #ffff33;"></div> Neutrinos</div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO THREE.JS ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030308, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 8, 18);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Luzes
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const dirLight = new THREE.DirectionalLight(0xffaa00, 0.7);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        // --- RESPONSIVIDADE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- GEOMETRIA DO DETETOR CMS ---
+        const detectorGroup = new THREE.Group();
+        scene.add(detectorGroup);
+
+        function createCMSLayer(radius, length, color, opacity, isWire) {
+            const geometry = new THREE.CylinderGeometry(radius, radius, length, 24, 1, true);
+            const material = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                wireframe: isWire
+            });
+            const cylinder = new THREE.Mesh(geometry, material);
+            cylinder.rotation.z = Math.PI / 2;
+            detectorGroup.add(cylinder);
+        }
+
+        // Camadas estruturais compactas do CMS
+        createCMSLayer(1.8, 10, 0x00ffcc, 0.15, true);  // Rastreador de Silício (Tracker)
+        createCMSLayer(2.8, 10, 0xff3366, 0.08, false); // ECAL (Calorímetro Eletromagnético)
+        createCMSLayer(3.8, 11, 0x33ff66, 0.08, false); // HCAL (Calorímetro Hadrónico)
+        createCMSLayer(4.4, 12, 0xffaa00, 0.2, true);   // O SUPER ÍMAN SOLENOIDE (3.8 Tesla)
+        createCMSLayer(7.5, 16, 0x3388ff, 0.05, true);  // Câmaras de Muões intercaladas com Ferro
+
+        // Linha do Feixe
+        const beamGeom = new THREE.CylinderGeometry(0.08, 0.08, 28, 16);
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0x444455 });
+        const beamPipe = new THREE.Mesh(beamGeom, beamMat);
+        beamPipe.rotation.z = Math.PI / 2;
+        scene.add(beamPipe);
+
+        // --- FÍSICA DAS PARTÍCULAS (CMS) ---
+        let particles = [];
+        let protons = [];
+        let animationState = 'idle';
+
+        class Proton {
+            constructor(direction) {
+                this.direction = direction;
+                const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+                const material = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.set(direction * 14, 0, 0);
+                scene.add(this.mesh);
+            }
+            update() { this.mesh.position.x -= this.direction * 0.35; }
+            destroy() {
+                scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        class CMSTrack {
+            constructor(type) {
+                this.type = type;
+                this.color = type === 'electron' ? 0xff3366 : type === 'hadron' ? 0x33ff66 : type === 'muon' ? 0x3388ff : 0xffff33;
+                
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.acos((Math.random() * 2) - 1);
+                this.dirX = Math.sin(theta) * Math.cos(phi);
+                this.dirY = Math.sin(theta) * Math.sin(phi);
+                this.dirZ = Math.cos(theta);
+
+                this.speed = 0.12 + Math.random() * 0.08;
+                this.radiusFilled = 0;
+                
+                if (type === 'electron') this.maxRadius = 2.8;
+                else if (type === 'hadron') this.maxRadius = 3.8;
+                else this.maxRadius = 7.5;
+
+                this.charge = Math.random() > 0.5 ? 1 : -1;
+                // Íman do CMS é muito forte (0.6 de fator de curvatura interna)
+                this.innerCurve = 0.6 * this.charge; 
+
+                this.maxPoints = 120;
+                this.positions = new Float32Array(this.maxPoints * 3);
+                this.geometry = new THREE.BufferGeometry();
+                this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+                
+                this.material = new THREE.LineBasicMaterial({
+                    color: this.color,
+                    transparent: type === 'neutrino',
+                    opacity: type === 'neutrino' ? 0.2 : 1.0
+                });
+
+                this.line = new THREE.Line(this.geometry, this.material);
+                scene.add(this.line);
+                this.pointCount = 1;
+                this.accumulatedAngle = 0;
+            }
+
+            update() {
+                if (this.radiusFilled >= this.maxRadius) return;
+
+                const prevRadius = this.radiusFilled;
+                this.radiusFilled += this.speed;
+                if (this.radiusFilled > this.maxRadius) this.radiusFilled = this.maxRadius;
+
+                // Efeito Solenoide CMS:
+                // Dentro do Íman (r < 4.4): Curva para um lado
+                // Fora do Íman (r >= 4.4): O fluxo magnético retorna pelo ferro, curvando ao contrário!
+                if (this.radiusFilled < 4.4) {
+                    this.accumulatedAngle += this.innerCurve * (this.radiusFilled - prevRadius);
+                } else {
+                    // Curvatura reversa no ferro de retorno
+                    this.accumulatedAngle -= (this.innerCurve * 0.5) * (this.radiusFilled - prevRadius);
+                }
+
+                const rotY = this.dirY * Math.cos(this.accumulatedAngle) - this.dirZ * Math.sin(this.accumulatedAngle);
+                const rotZ = this.dirY * Math.sin(this.accumulatedAngle) + this.dirZ * Math.cos(this.accumulatedAngle);
+
+                const newX = this.dirX * this.radiusFilled;
+                const newY = rotY * this.radiusFilled;
+                const newZ = rotZ * this.radiusFilled;
+
+                if (this.pointCount < this.maxPoints) {
+                    const idx = this.pointCount * 3;
+                    this.positions[idx] = newX;
+                    this.positions[idx + 1] = newY;
+                    this.positions[idx + 2] = newZ;
+                    
+                    this.geometry.setDrawRange(0, this.pointCount + 1);
+                    this.geometry.attributes.position.needsUpdate = true;
+                    this.pointCount++;
+                }
+            }
+
+            destroy() {
+                scene.remove(this.line);
+                this.geometry.dispose();
+                this.material.dispose();
+            }
+        }
+
+        // --- LOOP PRINCIPAL ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            detectorGroup.rotation.x += 0.0005; 
+
+            if (animationState === 'injecting') {
+                protons.forEach(p => p.update());
+                if (protons[0].mesh.position.x <= 0) {
+                    protons.forEach(p => p.destroy());
+                    protons = [];
+                    animationState = 'collided';
+                    triggerCMSCollision();
+                }
+            } else if (animationState === 'collided') {
+                particles.forEach(p => p.update());
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function triggerCMSCollision() {
+            particles.forEach(p => p.destroy());
+            particles = [];
+
+            // Evento típico com jatos compactos e assinatura de muões limpa
+            const types = ['electron', 'electron', 'muon', 'muon', 'neutrino'];
+            types.forEach(t => particles.push(new CMSTrack(t)));
+            
+            // Adicionar o jato de hadrões concentrado
+            for(let i=0; i<18; i++) {
+                particles.push(new CMSTrack('hadron'));
+            }
+        }
+
+        document.getElementById('collideBtn').addEventListener('click', () => {
+            if (protons.length > 0) protons.forEach(p => p.destroy());
+            protons = [new Proton(1), new Proton(-1)];
+            animationState = 'injecting';
+        });
+
+        animate();
+    </script>
+</body>
+</html>
