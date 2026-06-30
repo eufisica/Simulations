@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório de Indução Eletromagnética 3D - eufisica</title>
+    <style>
+        :root {
+            --panel-bg: #121214;
+            --control-bg: #1c1c21;
+            --accent: #4cc9f0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--panel-bg);
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        #canvas-3d {
+            flex: 2;
+            position: relative;
+            min-height: 300px;
+        }
+
+        #data-panel {
+            flex: 1;
+            display: flex;
+            background: #09090b;
+            border-top: 2px solid #2d2d35;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #controls {
+            background-color: var(--control-bg);
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            font-size: 0.85rem;
+            border-top: 1px solid #2d2d35;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        
+        input[type="range"] { width: 100%; cursor: pointer; }
+
+        .checkbox-group { 
+            flex-direction: row; 
+            align-items: center; 
+            gap: 8px; 
+            background: #25252b; 
+            padding: 5px 10px; 
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        #btn-play { background: #06d6a0; color: #fff; }
+        #btn-play.paused { background: #ffd166; color: #333; }
+        #btn-reset { background: #ef476f; color: #fff; }
+
+        #overlay-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            border-left: 3px solid var(--accent);
+            font-family: monospace;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div id="main-container">
+        <div id="canvas-3d">
+            <div id="overlay-info">
+                Fluxo (Φ): <span id="txt-fluxo">0.000</span> Wb<br>
+                Corrente (I): <span id="txt-corrente">0.000</span> A
+            </div>
+        </div>
+
+        <div id="data-panel">
+            <div class="chart-container">
+                <canvas id="chartFluxo"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartCorrente"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div class="control-group">
+            <label>Raio da Espira: <span id="val-raio">2.0</span></label>
+            <input type="range" id="range-raio" min="1.0" max="3.5" step="0.1" value="2.0">
+        </div>
+        <div class="control-group">
+            <label>Intensidade B: <span id="val-b">1.5</span></label>
+            <input type="range" id="range-b" min="0.2" max="5.0" step="0.1" value="1.5">
+        </div>
+        <div class="control-group">
+            <label>Ângulo Normal (°): <span id="val-angulo">0</span></label>
+            <input type="range" id="range-angulo" min="-90" max="90" step="1" value="0">
+        </div>
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="check-linhas" checked> <label>Ver Linhas</label>
+        </div>
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="check-uniforme"> <label>Campo Uniforme</label>
+        </div>
+        <div class="control-group checkbox-group">
+            <input type="checkbox" id="check-variante"> <label>B Uniforme Variável (t)</label>
+        </div>
+        <div class="control-group" style="flex-direction: row; gap: 10px; align-items: center;">
+            <button id="btn-play" style="flex: 1;">Pausa</button>
+            <button id="btn-reset" style="flex: 1;">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        /** CONFIGURAÇÃO THREE.JS **/
+        const container = document.getElementById('canvas-3d');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0c);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 5, 8);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const orbit = new THREE.OrbitControls(camera, renderer.domElement);
+        orbit.enableDamping = true;
+        const transform = new THREE.TransformControls(camera, renderer.domElement);
+        scene.add(transform);
+
+        transform.addEventListener('dragging-changed', (e) => orbit.enabled = !e.value);
+
+        const light = new THREE.PointLight(0xffffff, 1.2);
+        light.position.set(10, 10, 10);
+        scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+
+        /** VARIÁVEIS DE ESTADO **/
+        let simTime = 0;
+        let isPlaying = true;
+        let bIntensity = 1.5;
+        let loopRadius = 2.0;
+        let loopAngle = 0;
+        let isUniform = false;
+        let isTimeVariant = false;
+        let currentFlux = 0;
+        let lastFlux = 0;
+        let inducedCurrent = 0;
+        let textureOffset = 0;
+        let verLinhas = true;
+
+        const maxDataPoints = 400;
+
+        /** TEXTURA DE RASTO DE ELETRÕES **/
+        function criarTexturaFluxo() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 256, 0);
+            grad.addColorStop(0, '#1c1c21');
+            grad.addColorStop(0.3, '#00f5ff');
+            grad.addColorStop(0.5, '#ffffff');
+            grad.addColorStop(0.7, '#00f5ff');
+            grad.addColorStop(1, '#1c1c21');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 16);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.repeat.set(4, 1);
+            return tex;
+        }
+
+        const texturaEletrões = criarTexturaFluxo();
+
+        /** ELEMENTOS 3D **/
+        const loopGroup = new THREE.Group();
+        scene.add(loopGroup);
+
+        let loopGeo = new THREE.TorusGeometry(loopRadius, 0.04, 8, 120);
+        let loopMat = new THREE.MeshStandardMaterial({ 
+            map: texturaEletrões,
+            metalness: 0.1, 
+            roughness: 0.8
+        });
+        let loopMesh = new THREE.Mesh(loopGeo, loopMat);
+        loopMesh.rotation.x = Math.PI/2;
+        loopGroup.add(loopMesh);
+
+        const magnet = new THREE.Group();
+        const north = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 16), new THREE.MeshStandardMaterial({color: 0xef476f, roughness: 0.3}));
+        north.position.y = 0.5;
+        const south = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 16), new THREE.MeshStandardMaterial({color: 0x118ab2, roughness: 0.3}));
+        south.position.y = -0.5;
+        magnet.add(north, south);
+        magnet.position.set(0, 3, 0);
+        scene.add(magnet);
+        transform.attach(magnet);
+
+        const magnetLines = new THREE.Group();
+        magnet.add(magnetLines);
+
+        const uniformLines = new THREE.Group();
+        scene.add(uniformLines);
+
+        /** IMPLEMENTAÇÃO REALISTA DAS LINHAS DE CAMPO (SAEM DO NORTE E ENTRAM NO SUL) **/
+        function updateMagneticFieldLines() {
+            while(magnetLines.children.length > 0) magnetLines.remove(magnetLines.children[0]);
+            while(uniformLines.children.length > 0) uniformLines.remove(uniformLines.children[0]);
+
+            if(!isUniform) {
+                // Linhas radiais em torno do eixo do íman
+                const distribuicaoAngular = Math.max(4, Math.floor(bIntensity * 6));
+                const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 });
+                
+                // Distância entre os pólos virtuais (centro das geometrias norte/sul)
+                const poleY = 0.5; 
+
+                for(let i=0; i<distribuicaoAngular; i++){
+                    const angle = (i/distribuicaoAngular) * Math.PI * 2;
+                    
+                    // Gerar múltiplos loops com tamanhos e alcances diferentes por ângulo
+                    for(let L = 1; L <= 3; L++) {
+                        const points = [];
+                        const maxParam = 40;
+                        const parametroEscala = L * 0.8;
+
+                        for(let t=0; t<=maxParam; t++){
+                            // Interpolação paramétrica de uma linha de força de dipolo clássica
+                            const theta = (t / maxParam) * Math.PI;
+                            
+                            // Equação polar do dipolo aplicada à rotação cilíndrica: r = L * sin^2(theta)
+                            const r_dipolo = parametroEscala * Math.pow(Math.sin(theta), 2);
+                            
+                            // Coordenadas locais relativas ao centro do íman
+                            const radialX = r_dipolo * Math.sin(theta);
+                            const y = r_dipolo * Math.cos(theta) * 1.5; // Alongamento vertical do fluxo
+
+                            // Ajustar matematicamente para forçar a saída na ponta Norte (+0.5) e entrada no Sul (-0.5)
+                            const factorAjuste = Math.sin(theta);
+                            const xFinal = Math.cos(angle) * radialX;
+                            const zFinal = Math.sin(angle) * radialX;
+                            const yFinal = y + (poleY * Math.cos(theta) * (1 - factorAjuste));
+
+                            points.push(new THREE.Vector3(xFinal, yFinal, zFinal));
+                        }
+                        const geo = new THREE.BufferGeometry().setFromPoints(points);
+                        magnetLines.add(new THREE.Line(geo, mat));
+                    }
+                }
+            } else {
+                const lineCount = Math.max(4, Math.floor(bIntensity * 8));
+                for(let x=-2; x<=2; x+=4/Math.sqrt(lineCount)){
+                    for(let z=-2; z<=2; z+=4/Math.sqrt(lineCount)){
+                        const arrow = new THREE.ArrowHelper(new THREE.Vector3(0,-1,0), new THREE.Vector3(x, 4, z), 8, 0x06d6a0, 0.15, 0.08);
+                        uniformLines.add(arrow);
+                    }
+                }
+            }
+            
+            // Forçar visibilidade correta dependendo do estado das checkboxes
+            magnetLines.visible = verLinhas && !isUniform;
+            uniformLines.visible = verLinhas && isUniform;
+        }
+
+        /** CONFIGURAÇÃO DOS GRÁFICOS (CHART.JS) **/
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: { x: { display: false }, y: { ticks: { color: '#888' }, grid: { color: '#222' } } },
+            plugins: { legend: { labels: { color: '#eee', font: { size: 10 } } } }
+        };
+
+        const ctxF = document.getElementById('chartFluxo').getContext('2d');
+        const chartF = new Chart(ctxF, {
+            type: 'line',
+            data: { labels: Array(maxDataPoints).fill(''), datasets: [{ label: 'Fluxo Magnético (Wb)', data: Array(maxDataPoints).fill(0), borderColor: '#4cc9f0', borderWidth: 2, pointRadius: 0 }] },
+            options: chartOptions
+        });
+
+        const ctxI = document.getElementById('chartCorrente').getContext('2d');
+        const chartI = new Chart(ctxI, {
+            type: 'line',
+            data: { labels: Array(maxDataPoints).fill(''), datasets: [{ label: 'Corrente Induzida (A)', data: Array(maxDataPoints).fill(0), borderColor: '#ef476f', borderWidth: 2, pointRadius: 0 }] },
+            options: chartOptions
+        });
+
+        /** FÍSICA E ANIMAÇÃO CONTINUA **/
+        const clock = new THREE.Clock();
+
+        function updatePhysics() {
+            const delta = Math.min(clock.getDelta(), 0.05); 
+            if(!isPlaying) return;
+
+            let B = bIntensity;
+            if (isUniform && isTimeVariant) {
+                simTime += delta * 1.5;
+                B = bIntensity * Math.sin(simTime);
+                uniformLines.scale.y = Math.abs(B) + 0.01;
+                uniformLines.rotation.x = B >= 0 ? 0 : Math.PI;
+            }
+
+            const area = Math.PI * Math.pow(loopRadius, 2);
+            
+            let cosTheta = Math.cos(loopAngle * Math.PI / 180);
+            if (Math.abs(loopAngle) === 90) {
+                cosTheta = 0; 
+            }
+
+            if (isUniform) {
+                currentFlux = B * area * cosTheta;
+            } else {
+                const y = magnet.position.y;
+                const distXZ = Math.sqrt(magnet.position.x*magnet.position.x + magnet.position.z*magnet.position.z);
+                const bEfetivo = (bIntensity * 4) / Math.pow(y*y + distXZ*distXZ + 0.6, 1.5);
+                currentFlux = bEfetivo * area * cosTheta * (y >= 0 ? 1 : -1);
+            }
+
+            // Lei de Faraday
+            inducedCurrent = -(currentFlux - lastFlux) / (delta + 0.001);
+            
+            if (cosTheta === 0) {
+                currentFlux = 0;
+                inducedCurrent = 0;
+            }
+            
+            lastFlux = currentFlux;
+
+            // Animação da Textura
+            if(Math.abs(inducedCurrent) > 0.001) {
+                textureOffset -= inducedCurrent * delta * 0.5;
+                texturaEletrões.offset.x = textureOffset;
+                const factorBrilho = Math.min(1, Math.abs(inducedCurrent) * 0.1);
+                loopMat.color.setRGB(1 - factorBrilho, 0.8 + factorBrilho * 0.2, 0.4 + factorBrilho * 0.6);
+            } else {
+                loopMat.color.setHex(0xffd166);
+            }
+
+            // HUD
+            document.getElementById('txt-fluxo').innerText = currentFlux.toFixed(3);
+            document.getElementById('txt-corrente').innerText = inducedCurrent.toFixed(3);
+
+            // Gráficos
+            chartF.data.datasets[0].data.push(currentFlux);
+            chartF.data.datasets[0].data.shift();
+            chartF.update();
+
+            chartI.data.datasets[0].data.push(inducedCurrent);
+            chartI.data.datasets[0].data.shift();
+            chartI.update();
+        }
+
+        /** EVENTOS DA INTERFACE **/
+        window.addEventListener('resize', () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        });
+
+        document.getElementById('range-raio').addEventListener('input', (e) => {
+            loopRadius = parseFloat(e.target.value);
+            document.getElementById('val-raio').innerText = loopRadius.toFixed(1);
+            loopMesh.geometry.dispose();
+            loopMesh.geometry = new THREE.TorusGeometry(loopRadius, 0.04, 8, 120);
+        });
+
+        document.getElementById('range-b').addEventListener('input', (e) => {
+            bIntensity = parseFloat(e.target.value);
+            document.getElementById('val-b').innerText = bIntensity.toFixed(1);
+            updateMagneticFieldLines();
+        });
+
+        document.getElementById('range-angulo').addEventListener('input', (e) => {
+            loopAngle = parseInt(e.target.value);
+            document.getElementById('val-angulo').innerText = loopAngle;
+            loopGroup.rotation.z = loopAngle * Math.PI / 180;
+        });
+
+        document.getElementById('check-linhas').addEventListener('change', (e) => {
+            verLinhas = e.target.checked;
+            magnetLines.visible = verLinhas && !isUniform;
+            uniformLines.visible = verLinhas && isUniform;
+        });
+
+        document.getElementById('check-uniforme').addEventListener('change', (e) => {
+            isUniform = e.target.checked;
+            magnet.visible = !isUniform;
+            if(isUniform) transform.detach(); else transform.attach(magnet);
+            updateMagneticFieldLines();
+        });
+
+        document.getElementById('check-variante').addEventListener('change', (e) => {
+            isTimeVariant = e.target.checked;
+            if(isTimeVariant) {
+                isUniform = true;
+                document.getElementById('check-uniforme').checked = true;
+                magnet.visible = false;
+                transform.detach();
+            }
+            updateMagneticFieldLines();
+        });
+
+        document.getElementById('btn-play').addEventListener('click', (e) => {
+            isPlaying = !isPlaying;
+            e.target.innerText = isPlaying ? "Pausa" : "Play";
+            e.target.className = isPlaying ? "" : "paused";
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            magnet.position.set(0, 3, 0);
+            simTime = 0;
+            currentFlux = 0;
+            lastFlux = 0;
+            chartF.data.datasets[0].data.fill(0);
+            chartI.data.datasets[0].data.fill(0);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePhysics();
+            orbit.update();
+            renderer.render(scene, camera);
+        }
+
+        updateMagneticFieldLines();
+        animate();
+    </script>
+</body>
+</html>
