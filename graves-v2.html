@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Lançamento Vertical - José Gonçalves (eufisica)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f1f5f9; padding: 15px; height: 100vh; display: flex; flex-direction: column; }
+        .container { max-width: 1400px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; flex: 1; }
+        h1 { text-align: center; color: #0f172a; font-size: 1.5rem; }
+        
+        .main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1; min-height: 0; }
+        @media (max-width: 850px) { .main-layout { grid-template-columns: 1fr; } }
+
+        /* Lado Esquerdo: Animação e Controlos */
+        .left-panel { display: flex; flex-direction: column; gap: 15px; }
+        #simCanvas { width: 100%; flex: 1; background: linear-gradient(to bottom, #bae6fd, #e0f2fe); border-radius: 12px; border: 2px solid #cbd5e1; min-height: 250px; }
+        
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-weight: 600; font-size: 0.85rem; color: #475569; display: flex; justify-content: space-between; }
+        .val-display { color: #2563eb; font-weight: bold; }
+        select, input[type="range"] { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        
+        button { grid-column: 1 / -1; padding: 10px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+
+        /* Lado Direito: Gráficos Empilhados */
+        .right-panel { display: grid; grid-template-rows: 1fr 1fr; gap: 15px; }
+        .chart-box { background: white; padding: 10px; border-radius: 12px; border: 1px solid #cbd5e1; position: relative; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Simulador de Lançamento Vertical - José Gonçalves (eufisica)</h1>
+    
+    <div class="main-layout">
+        <div class="left-panel">
+            <canvas id="simCanvas"></canvas>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>Gravidade:</label>
+                    <select id="gravidade">
+                        <option value="9.81">Terra (9.81 m/s²)</option>
+                        <option value="1.62">Lua (1.62 m/s²)</option>
+                        <option value="3.71">Marte (3.71 m/s²)</option>
+                        <option value="24.79">Júpiter (24.79 m/s²)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Massa: <span class="val-display" id="v-massa">1.0 kg</span></label>
+                    <input type="range" id="massa" min="0.1" max="10" step="0.1" value="1" oninput="document.getElementById('v-massa').innerText = this.value + ' kg'">
+                </div>
+                <div class="control-group">
+                    <label>Vel. Inicial: <span class="val-display" id="v-v0">20 m/s</span></label>
+                    <input type="range" id="v0" min="-30" max="30" step="1" value="20" oninput="document.getElementById('v-v0').innerText = this.value + ' m/s'">
+                </div>
+                <div class="control-group">
+                    <label>Altura Inicial: <span class="val-display" id="v-y0">0 m</span></label>
+                    <input type="range" id="y0" min="0" max="200" step="1" value="0" oninput="document.getElementById('v-y0').innerText = this.value + ' m'">
+                </div>
+                <div class="control-group">
+                    <label>Ar (k): <span class="val-display" id="v-ar">0.10</span></label>
+                    <input type="range" id="ar" min="0" max="2" step="0.05" value="0.1" oninput="document.getElementById('v-ar').innerText = parseFloat(this.value).toFixed(2)">
+                </div>
+                <button onclick="iniciarSimulacao()">Lançar / Reiniciar</button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="chart-box"><canvas id="posChart"></canvas></div>
+            <div class="chart-box"><canvas id="velChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let simCanvas = document.getElementById('simCanvas');
+    let ctx = simCanvas.getContext('2d');
+    let posChart, velChart, animationFrame;
+    let alturaMaximaSimulada = 200; 
+
+    function resizeCanvas() {
+        simCanvas.width = simCanvas.clientWidth;
+        simCanvas.height = simCanvas.clientHeight;
+        desenhar(0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function initCharts() {
+        if(posChart) posChart.destroy();
+        if(velChart) velChart.destroy();
+
+        let fastOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            spanGaps: true,
+            elements: { line: { borderWidth: 2 }, point: { radius: 0 } },
+            scales: { x: { type: 'linear', title: { display: true, text: 'Tempo (s)' } } }
+        };
+        
+        posChart = new Chart(document.getElementById('posChart'), {
+            type: 'line',
+            data: { datasets: [{ label: 'Altura (m)', data: [], borderColor: '#2563eb', fill: false }] },
+            options: { ...fastOptions, scales: { ...fastOptions.scales, y: { title: { display: true, text: 'Altura (m)' } } } }
+        });
+
+        velChart = new Chart(document.getElementById('velChart'), {
+            type: 'line',
+            data: { datasets: [{ label: 'Velocidade (m/s)', data: [], borderColor: '#dc3545', fill: false }] },
+            options: { ...fastOptions, scales: { ...fastOptions.scales, y: { title: { display: true, text: 'Velocidade (m/s)' } } } }
+        });
+    }
+
+    function iniciarSimulacao() {
+        cancelAnimationFrame(animationFrame);
+        initCharts();
+
+        let g = parseFloat(document.getElementById('gravidade').value);
+        let m = parseFloat(document.getElementById('massa').value);
+        let v = parseFloat(document.getElementById('v0').value);
+        let y = parseFloat(document.getElementById('y0').value);
+        let k = parseFloat(document.getElementById('ar').value);
+
+        alturaMaximaSimulada = y + (v > 0 ? (v * v) / (2 * g) : 0);
+        if (alturaMaximaSimulada < 10) alturaMaximaSimulada = 10; 
+
+        let t = 0;
+        let ultimoTempo = performance.now();
+
+        function atualizar(tempoAtual) {
+            let dt = (tempoAtual - ultimoTempo) / 1000;
+            ultimoTempo = tempoAtual;
+
+            if (dt > 0.05) dt = 0.05; 
+
+            let f_ar = -k * v * Math.abs(v);
+            let f_grav = -m * g;
+            let a = (f_grav + f_ar) / m;
+
+            v += a * dt;
+            y += v * dt;
+            t += dt;
+
+            // CORREÇÃO: Só para se estiver no chão (y <= 0) E a mover-se para baixo (v <= 0)
+            if (y <= 0 && v <= 0) {
+                y = 0; v = 0;
+                desenhar(y);
+                adicionarDados(t, y, v);
+                return; 
+            }
+
+            desenhar(y);
+            adicionarDados(t, y, v);
+            animationFrame = requestAnimationFrame(atualizar);
+        }
+
+        animationFrame = requestAnimationFrame((tempo) => { ultimoTempo = tempo; atualizar(tempo); });
+    }
+
+    function desenhar(y) {
+        ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+        
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(0, simCanvas.height - 15, simCanvas.width, 15);
+
+        let espacoUtil = simCanvas.height - 45; 
+        let bolaY = simCanvas.height - 15 - (y * espacoUtil / alturaMaximaSimulada);
+
+        ctx.beginPath();
+        ctx.arc(simCanvas.width / 2, bolaY, 14, 0, Math.PI * 2);
+        ctx.fillStyle = "#ea580c";
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = "rgba(0,0,0,0.3)";
+        ctx.fill();
+        ctx.closePath();
+        ctx.shadowBlur = 0; 
+    }
+
+    function adicionarDados(tempo, posicao, velocidade) {
+        posChart.data.datasets[0].data.push({x: tempo, y: posicao});
+        velChart.data.datasets[0].data.push({x: tempo, y: velocidade});
+        posChart.update('none'); 
+        velChart.update('none');
+    }
+
+    setTimeout(resizeCanvas, 100);
+</script>
+</body>
+</html>

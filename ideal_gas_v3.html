@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Gás Ideal - eufisica</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #141414;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            background: #ffffff;
+            border-radius: 4px;
+        }
+        .panel {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .stats-box {
+            background-color: #d2d2d2;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .pressure-val {
+            color: #e63232;
+        }
+        .graph-label {
+            font-size: 13px;
+            color: #464646;
+            margin-bottom: -5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Termodinâmica Estatística - José Gonçalves (eufisica)</h1>
+
+    <div class="container">
+        <canvas id="simCanvas" width="550" height="550"></canvas>
+
+        <div class="panel">
+            <div class="control-group">
+                <label id="lblTemp">Temperatura: 300 K</label>
+                <input type="range" id="sldTemp" min="100" max="600" value="300">
+            </div>
+
+            <div class="control-group">
+                <label id="lblWidth">Largura da Caixa, <i>l</i> = 0.80 m</label>
+                <input type="range" id="sldWidth" min="0.4" max="1.0" step="0.05" value="0.8">
+            </div>
+
+            <div class="control-group">
+                <label id="lblMass">Massa das Partículas, <i>m</i> = 4 u</label>
+                <input type="range" id="sldMass" min="1" max="10" value="4">
+            </div>
+
+            <div class="control-group">
+                <label id="lblNum">Número de Partículas <i>N</i> = 100</label>
+                <input type="range" id="sldNum" min="10" max="250" value="100">
+            </div>
+
+            <div class="stats-box">
+                <div id="statWidth">Largura da Caixa, <i>l</i> = 0.80 m</div>
+                <div id="statArea">Área Ocupada, <i>A</i> = 0.64 m²</div>
+                <div id="statVel">Velocidade Média, <i>v</i> = 0.0 m/s</div>
+                <div id="statPres">Pressão Média, <i>P</i> = <span class="pressure-val">0.0 Pa</span></div>
+            </div>
+
+            <div class="graph-label">Distribuição de Velocidades f(v) [m/s]</div>
+            <canvas id="graphCanvas" width="350" height="130"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const gCanvas = document.getElementById('graphCanvas');
+        const gCtx = gCanvas.getContext('2d');
+
+        // --- Fatores de Escala Física (SI) ---
+        const PX_PER_METER = 500.0; 
+        const DT = 0.0001;          
+        const U_TO_KG = 1.66e-27;   
+        const BOX_X_MIN = 25;
+        const BOX_Y_MIN = 25;
+
+        let totalWallImpulse = 0.0;
+        let pressureHistory = [];
+
+        // Elementos DOM
+        const sldTemp = document.getElementById('sldTemp');
+        const sldWidth = document.getElementById('sldWidth');
+        const sldMass = document.getElementById('sldMass');
+        const sldNum = document.getElementById('sldNum');
+
+        // Variáveis de Estado
+        let tempVal = parseFloat(sldTemp.value);
+        let boxWM = parseFloat(sldWidth.value);
+        let boxHM = boxWM; 
+        let massVal = parseInt(sldMass.value);
+        let numPartVal = parseInt(sldNum.value);
+
+        class Particle {
+            constructor(x, y, vxSi, vySi, massU) {
+                this.x = x;
+                this.y = y;
+                this.vxSi = vxSi;
+                this.vySi = vySi;
+                this.massU = massU;
+                this.radius = Math.round(4 * Math.sqrt(massU));
+            }
+
+            move() {
+                let vxPx = this.vxSi * PX_PER_METER * DT;
+                let vyPx = this.vySi * PX_PER_METER * DT;
+
+                this.x += vxPx;
+                this.y += vyPx;
+
+                let boxXMax = BOX_X_MIN + boxWM * PX_PER_METER;
+                let boxYMax = BOX_Y_MIN + boxHM * PX_PER_METER;
+                let massKg = this.massU * U_TO_KG;
+
+                // Colisão Parede Esquerda/Direita
+                if (this.x - this.radius < BOX_X_MIN) {
+                    this.x = BOX_X_MIN + this.radius;
+                    this.vxSi *= -1;
+                    totalWallImpulse += 2 * massKg * Math.abs(this.vxSi);
+                } else if (this.x + this.radius > boxXMax) {
+                    this.x = boxXMax - this.radius;
+                    this.vxSi *= -1;
+                    totalWallImpulse += 2 * massKg * Math.abs(this.vxSi);
+                }
+
+                // Colisão Parede Superior/Inferior
+                if (this.y - this.radius < BOX_Y_MIN) {
+                    this.y = BOX_Y_MIN + this.radius;
+                    this.vySi *= -1;
+                    totalWallImpulse += 2 * massKg * Math.abs(this.vySi);
+                } else if (this.y + this.radius > boxYMax) {
+                    this.y = boxYMax - this.radius;
+                    this.vySi *= -1;
+                    totalWallImpulse += 2 * massKg * Math.abs(this.vySi);
+                }
+            }
+
+            draw() {
+                let speed = Math.hypot(this.vxSi, this.vySi);
+                let factor = Math.min(speed / 300.0, 1.0);
+                let r = Math.floor(50 + 180 * factor);
+                let b = Math.floor(230 - 180 * factor);
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgb(${r}, 100, ${b})`;
+                ctx.fill();
+                ctx.strokeStyle = "#141414";
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
+
+        let particles = [];
+
+        function initParticles() {
+            particles = [];
+            let boxXPx = boxWM * PX_PER_METER;
+            let boxYPx = boxHM * PX_PER_METER;
+            let vScale = 12.0 * Math.sqrt(tempVal / massVal);
+
+            for (let i = 0; i < numPartVal; i++) {
+                let maxR = Math.round(4 * Math.sqrt(massVal));
+                let x = BOX_X_MIN + maxR + 5 + Math.random() * (boxXPx - 2 * maxR - 10);
+                let y = BOX_Y_MIN + maxR + 5 + Math.random() * (boxYPx - 2 * maxR - 10);
+
+                let angle = Math.random() * 2 * Math.PI;
+                let speed = (0.5 + Math.random()) * vScale;
+                let vxSi = speed * Math.cos(angle);
+                let vySi = speed * Math.sin(angle);
+
+                particles.push(new Particle(x, y, vxSi, vySi, massVal));
+            }
+            pressureHistory = [];
+        }
+
+        function resolveCollisions() {
+            let n = particles.length;
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    let p1 = particles[i];
+                    let p2 = particles[j];
+
+                    let dx = p2.x - p1.x;
+                    let dy = p2.y - p1.y;
+                    let dist = Math.hypot(dx, dy);
+                    let minDist = p1.radius + p2.radius;
+
+                    if (dist < minDist) {
+                        let overlap = minDist - dist;
+                        if (dist === 0) dist = 0.1;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+
+                        let mTotal = p1.massU + p2.massU;
+                        p1.x -= nx * overlap * (p2.massU / mTotal);
+                        p1.y -= ny * overlap * (p2.massU / mTotal);
+                        p2.x += nx * overlap * (p1.massU / mTotal);
+                        p2.y += ny * overlap * (p1.massU / mTotal);
+
+                        let kx = p1.vxSi - p2.vxSi;
+                        let ky = p1.vySi - p2.vySi;
+                        let p = 2 * (nx * kx + ny * ky) / mTotal;
+
+                        p1.vxSi -= p * p2.massU * nx;
+                        p1.vySi -= p * p2.massU * ny;
+                        p2.vxSi += p * p1.massU * nx
+                        p2.vySi += p * p1.massU * ny;
+                    }
+                }
+            }
+        }
+
+        // Atualização via Inputs
+        function updateLabels() {
+            document.getElementById('lblTemp').innerText = `Temperatura: ${Math.round(tempVal)} K`;
+            document.getElementById('lblWidth').innerText = `Largura da Caixa: ${boxWM.toFixed(2)} m`;
+            document.getElementById('lblMass').innerText = `Massa das Partículas: ${massVal} u`;
+            document.getElementById('lblNum').innerText = `Número de Partículas: ${numPartVal}`;
+        }
+
+        function handleInput() {
+            tempVal = parseFloat(sldTemp.value);
+            boxWM = parseFloat(sldWidth.value);
+            boxHM = boxWM;
+            massVal = parseInt(sldMass.value);
+            numPartVal = parseInt(sldNum.value);
+            updateLabels();
+            initParticles();
+        }
+
+        [sldTemp, sldWidth, sldMass, sldNum].forEach(item => item.addEventListener('input', handleInput));
+
+        function drawHistogram() {
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
+            gCtx.strokeStyle = "#141414";
+            gCtx.lineWidth = 2;
+            gCtx.strokeRect(0, 0, gCanvas.width, gCanvas.height);
+
+            let numBins = 16;
+            let bins = Array(numBins).fill(0);
+            let maxVGraf = 500.0;
+            let binWidth = maxVGraf / numBins;
+
+            particles.forEach(p => {
+                let v = Math.hypot(p.vxSi, p.vySi);
+                let idx = Math.floor(v / binWidth);
+                if (idx >= numBins) idx = numBins - 1;
+                bins[idx]++;
+            });
+
+            let maxCount = Math.max(...bins) || 1;
+            let barW = gCanvas.width / numBins;
+
+            for (let i = 0; i < numBins; i++) {
+                let barH = (bins[i] / maxCount) * (gCanvas.height - 15);
+                gCtx.fillStyle = "#28a95a";
+                gCtx.fillRect(i * barW + 1, gCanvas.height - barH, barW - 2, barH);
+            }
+        }
+
+        // Loop de Animação
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            totalWallImpulse = 0.0;
+
+            // Física (2 micro passos por frame para precisão de colisão)
+            for (let step = 0; step < 2; step++) {
+                particles.forEach(p => p.move());
+                resolveCollisions();
+            }
+
+            // Desenhar Caixa
+            ctx.strokeStyle = "#141414";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(BOX_X_MIN, BOX_Y_MIN, boxWM * PX_PER_METER, boxHM * PX_PER_METER);
+
+            // Desenhar Partículas
+            particles.forEach(p => p.draw());
+
+            // Cálculos Métricos
+            let perimeterM = 2 * (boxWM + boxHM);
+            let calculatedForce = totalWallImpulse / DT;
+            let instPressure = calculatedForce / perimeterM;
+            let realPressurePa = instPressure * 1e24; // Amplificação de escala macro
+
+            pressureHistory.push(realPressurePa);
+            if (pressureHistory.length > 30) pressureHistory.shift();
+            let avgPressurePa = pressureHistory.reduce((a,b) => a+b, 0) / pressureHistory.length;
+
+            let areaM2 = boxWM * boxHM;
+            let avgSpeedSi = particles.reduce((acc, p) => acc + Math.hypot(p.vxSi, p.vySi), 0) / particles.length;
+
+            // Atualizar Caixa de Estatísticas
+            document.getElementById('statWidth').innerText = `Largura da Caixa (l): ${boxWM.toFixed(2)} m`;
+            document.getElementById('statArea').innerText = `Área Ocupada (A): ${areaM2.toFixed(2)} m²`;
+            document.getElementById('statVel').innerText = `Velocidade Média (<v>): ${avgSpeedSi.toFixed(1)} m/s`;
+            document.getElementById('statPres').innerHTML = `Pressão Média (P): <span class="pressure-val">${avgPressurePa.toFixed(1)} Pa</span>`;
+
+            drawHistogram();
+            requestAnimationFrame(update);
+        }
+
+        // Inicialização
+        updateLabels();
+        initParticles();
+        update();
+    </script>
+</body>
+</html>

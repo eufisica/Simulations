@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Órbitas - eufisica</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #d0e8f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            user-select: none;
+        }
+
+        #simulation-container {
+            background-color: #fcf5e9;
+            border: 1px solid #c8bda8;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        #time-display {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 8px;
+        }
+
+        #control-panel {
+            width: 320px;
+            background-color: #ced6ce;
+            border: 1px solid #adb5ad;
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            background-color: #bdc7bd;
+            border: 1px solid #9ca69c;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .control-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2b3a2b;
+            font-size: 14px;
+        }
+
+        .slider-container {
+            margin-bottom: 10px;
+        }
+
+        .slider-container label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Botões de Ação */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #7a857a;
+            border-radius: 4px;
+            background-color: #e2e8e2;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #f0f4f0;
+        }
+
+        .btn:active {
+            background-color: #cbd2cb;
+        }
+
+        .mass-label-m1 { color: #cc2424; font-weight: bold; }
+        .mass-label-m2 { color: #2463cc; font-weight: bold; }
+        .mass-label-m3 { color: #1e7a1e; font-weight: bold; }
+        .mass-label-m4 { color: #b15c00; font-weight: bold; }
+        .mass-label-m5 { color: #701eb1; font-weight: bold; }
+        .mass-label-m6 { color: #008da5; font-weight: bold; }
+        .mass-label-m7 { color: #555555; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="simulation-container">
+        <div id="time-display">Tempo = <span id="time-val">0.0</span> anos</div>
+        <canvas id="simCanvas" width="900" height="550"></canvas>
+    </div>
+
+    <div id="control-panel">
+        <div class="action-buttons">
+            <button id="btn-play-pause" class="btn">Pausar</button>
+            <button id="btn-reset" class="btn">Reiniciar</button>
+        </div>
+
+        <div class="control-group">
+            <div class="slider-container">
+                <label>Corpos = <span id="bodies-count">7</span></label>
+                <input type="range" id="bodies-slider" min="1" max="7" value="7">
+            </div>
+            <div class="slider-container">
+                <label>Velocidade da Simulação</label>
+                <input type="range" id="speed-slider" min="1" max="5" value="3">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="control-title">Massas dos Corpos</div>
+            
+            <div class="slider-container" id="m1-group">
+                <label class="mass-label-m1">m₁ (Sol) = <span id="m1-val">2.0</span> × 10³⁰ kg</label>
+                <input type="range" id="m1-slider" min="0.5" max="5" step="0.1" value="2.0">
+            </div>
+            
+            <div class="slider-container" id="m2-group">
+                <label class="mass-label-m2">m₂ = <span id="m2-val">6.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m2-slider" min="1" max="20" step="0.5" value="6.0">
+            </div>
+            
+            <div class="slider-container" id="m3-group">
+                <label class="mass-label-m3">m₃ = <span id="m3-val">2.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m3-slider" min="1" max="20" step="0.5" value="2.0">
+            </div>
+
+            <div class="slider-container" id="m4-group">
+                <label class="mass-label-m4">m₄ = <span id="m4-val">4.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m4-slider" min="1" max="20" step="0.5" value="4.0">
+            </div>
+
+            <div class="slider-container" id="m5-group">
+                <label class="mass-label-m5">m₅ = <span id="m5-val">8.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m5-slider" min="1" max="20" step="0.5" value="8.0">
+            </div>
+
+            <div class="slider-container" id="m6-group">
+                <label class="mass-label-m6">m₆ = <span id="m6-val">5.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m6-slider" min="1" max="20" step="0.5" value="5.0">
+            </div>
+
+            <div class="slider-container" id="m7-group">
+                <label class="mass-label-m7">m₇ = <span id="m7-val">3.0</span> × 10²⁴ kg</label>
+                <input type="range" id="m7-slider" min="1" max="20" step="0.5" value="3.0">
+            </div>
+        </div>
+
+        <div class="control-group checkbox-grid">
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-grid">
+                <label for="chk-grid">Grelha</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-velocities">
+                <label for="chk-velocities">Velocidades</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-trajectories" checked>
+                <label for="chk-trajectories">Trajetórias</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-accelerate">
+                <label for="chk-accelerate">Acelerar</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-round" checked>
+                <label for="chk-round">Arredondar V</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="chk-cm" checked>
+                <label for="chk-cm">Fixar C.M.</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Constantes Físicas Calibradas
+        const G = 1.5; 
+        let time = 0;
+        let numBodies = 7;
+        let isRunning = true;
+        
+        let bodies = [];
+
+        function initBodies() {
+            // Pegando os valores dos sliders
+            const m1_input = parseFloat(document.getElementById('m1-slider').value);
+            const m2_input = parseFloat(document.getElementById('m2-slider').value);
+            const m3_input = parseFloat(document.getElementById('m3-slider').value);
+            const m4_input = parseFloat(document.getElementById('m4-slider').value);
+            const m5_input = parseFloat(document.getElementById('m5-slider').value);
+            const m6_input = parseFloat(document.getElementById('m6-slider').value);
+            const m7_input = parseFloat(document.getElementById('m7-slider').value);
+
+            // Balanço de massas para gravitação visual estável
+            const m1 = m1_input * 250; 
+            const m2 = m2_input * 0.1;
+            const m3 = m3_input * 0.1;
+            const m4 = m4_input * 0.1;
+            const m5 = m5_input * 0.1;
+            const m6 = m6_input * 0.1;
+            const m7 = m7_input * 0.1;
+
+            const cx = 450;
+            const cy = 275;
+
+            // Função interna para obter a velocidade orbital circular perfeita v = sqrt(G*M/r)
+            const getVObj = (r) => Math.sqrt((G * m1) / r);
+
+            // Definição das distâncias dos planetas ao centro
+            const r2 = 65;
+            const r3 = 110;
+            const r4 = 155;
+            const r5 = 195;
+            const r6 = 235;
+            const r7 = 265;
+
+            bodies = [
+                { // m1 - Estrela Central
+                    x: cx, y: cy, vx: 0, vy: 0, 
+                    mass: m1, radius: 12, color: '#e03131', history: [] 
+                },
+                { // m2 - Circular Perfeita
+                    x: cx, y: cy - r2, vx: getVObj(r2), vy: 0, 
+                    mass: m2, radius: 5, color: '#1c7ed6', history: [] 
+                },
+                { // m3 - Elíptica
+                    x: cx, y: cy + r3, vx: -getVObj(r3) * 0.84, vy: 0, 
+                    mass: m3, radius: 5, color: '#2b8a3e', history: [] 
+                },
+                { // m4 - Circular Perfeita
+                    x: cx, y: cy - r4, vx: getVObj(r4), vy: 0, 
+                    mass: m4, radius: 6, color: '#b15c00', history: [] 
+                },
+                { // m5 - Elíptica
+                    x: cx, y: cy + r5, vx: -getVObj(r5) * 1.15, vy: 0, 
+                    mass: m5, radius: 7, color: '#701eb1', history: [] 
+                },
+                { // m6 - Circular Perfeita
+                    x: cx, y: cy - r6, vx: getVObj(r6), vy: 0, 
+                    mass: m6, radius: 5, color: '#008da5', history: [] 
+                },
+                { // m7 - Elíptica
+                    x: cx, y: cy + r7, vx: -getVObj(r7) * 0.88, vy: 0, 
+                    mass: m7, radius: 4, color: '#555555', history: [] 
+                }
+            ];
+            
+            time = 0;
+            document.getElementById('time-val').textContent = "0.0";
+        }
+
+        // Loop principal da física
+        function updatePhysics() {
+            if (!isRunning) return;
+
+            const speedMultiplier = parseInt(document.getElementById('speed-slider').value);
+            const iterations = speedMultiplier * (document.getElementById('chk-accelerate').checked ? 5 : 2);
+
+            for (let step = 0; step < iterations; step++) {
+                let ax = Array(numBodies).fill(0);
+                let ay = Array(numBodies).fill(0);
+
+                // Cálculo de Atração Gravitacional Mútua (Lei de Newton)
+                for (let i = 0; i < numBodies; i++) {
+                    for (let j = i + 1; j < numBodies; j++) {
+                        let dx = bodies[j].x - bodies[i].x;
+                        let dy = bodies[j].y - bodies[i].y;
+                        let distSq = dx * dx + dy * dy;
+                        let dist = Math.sqrt(distSq);
+
+                        if (dist < 10) dist = 10;
+
+                        let forceMagI = (G * bodies[j].mass) / distSq;
+                        let forceMagJ = (G * bodies[i].mass) / distSq;
+
+                        ax[i] += forceMagI * (dx / dist);
+                        ay[i] += forceMagI * (dy / dist);
+
+                        ax[j] -= forceMagJ * (dx / dist);
+                        ay[j] -= forceMagJ * (dy / dist);
+                    }
+                }
+
+                // Atualizar Posições, Velocidades e Histórico de Trajetória
+                for (let i = 0; i < numBodies; i++) {
+                    bodies[i].vx += ax[i];
+                    bodies[i].vy += ay[i];
+                    bodies[i].x += bodies[i].vx;
+                    bodies[i].y += bodies[i].vy;
+
+                    if (document.getElementById('chk-trajectories').checked) {
+                        bodies[i].history.push({x: bodies[i].x, y: bodies[i].y});
+                        if (bodies[i].history.length > 1200) {
+                            bodies[i].history.shift();
+                        }
+                    }
+                }
+
+                // Centralizar no Centro de Massa (C.M.)
+                if (document.getElementById('chk-cm').checked) {
+                    let totalMass = 0;
+                    let cx = 0, cy = 0;
+                    for(let i=0; i<numBodies; i++) {
+                        totalMass += bodies[i].mass;
+                        cx += bodies[i].x * bodies[i].mass;
+                        cy += bodies[i].y * bodies[i].mass;
+                    }
+                    cx /= totalMass;
+                    cy /= totalMass;
+
+                    let offsetX = 450 - cx;
+                    let offsetY = 275 - cy;
+
+                    for(let i=0; i<numBodies; i++) {
+                        bodies[i].x += offsetX;
+                        bodies[i].y += offsetY;
+                    }
+                }
+
+                time += 0.001;
+            }
+            document.getElementById('time-val').textContent = time.toFixed(1);
+        }
+
+        // Renderização gráfica
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar Grade de Fundo
+            if (document.getElementById('chk-grid').checked) {
+                ctx.strokeStyle = '#e1dcd3';
+                ctx.lineWidth = 1;
+                for (let i = 50; i < canvas.width; i += 50) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+                }
+                for (let j = 50; j < canvas.height; j += 50) {
+                    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+                }
+            }
+
+            // Desenhar Trajetórias (Rastros)
+            if (document.getElementById('chk-trajectories').checked) {
+                for (let i = 0; i < numBodies; i++) {
+                    if (bodies[i].history.length < 2) continue;
+                    ctx.beginPath();
+                    ctx.strokeStyle = bodies[i].color;
+                    ctx.lineWidth = 1.5;
+                    ctx.moveTo(bodies[i].history[0].x, bodies[i].history[0].y);
+                    for (let h = 1; h < bodies[i].history.length; h++) {
+                        ctx.lineTo(bodies[i].history[h].x, bodies[i].history[h].y);
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            // Desenhar Corpos Orbitais
+            for (let i = 0; i < numBodies; i++) {
+                ctx.beginPath();
+                ctx.arc(bodies[i].x, bodies[i].y, bodies[i].radius, 0, 2 * Math.PI);
+                ctx.fillStyle = bodies[i].color;
+                ctx.fill();
+
+                // Vetores de Velocidade
+                if (document.getElementById('chk-velocities').checked) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(bodies[i].x, bodies[i].y);
+                    ctx.lineTo(bodies[i].x + bodies[i].vx * 25, bodies[i].y + bodies[i].vy * 25);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function loop() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Gerenciamento dinâmico dos Sliders de controle na barra lateral
+        function updateSliderVisibility() {
+            for (let i = 2; i <= 7; i++) {
+                const group = document.getElementById(`m${i}-group`);
+                if (group) {
+                    group.style.display = numBodies >= i ? 'block' : 'none';
+                }
+            }
+        }
+
+        // Controles de Interação e Botões
+        const playPauseBtn = document.getElementById('btn-play-pause');
+        playPauseBtn.addEventListener('click', () => {
+            isRunning = !isRunning;
+            playPauseBtn.textContent = isRunning ? "Pausar" : "Continuar";
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            initBodies();
+        });
+
+        document.getElementById('bodies-slider').addEventListener('input', (e) => {
+            numBodies = parseInt(e.target.value);
+            document.getElementById('bodies-count').textContent = numBodies;
+            updateSliderVisibility();
+            initBodies();
+        });
+
+        // Ouvintes de alteração para todos os Sliders de Massa
+        for (let i = 1; i <= 7; i++) {
+            document.getElementById(`m${i}-slider`).addEventListener('input', (e) => {
+                document.getElementById(`m${i}-val`).textContent = e.target.value;
+                initBodies();
+            });
+        }
+
+        // Início
+        updateSliderVisibility();
+        initBodies();
+        loop();
+    </script>
+</body>
+</html>

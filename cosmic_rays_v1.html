@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Raios Cósmicos</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+        #canvas {
+            display: block;
+        }
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 10, 30, 0.85);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #3a3a5a;
+            max-width: 320px;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #4af;
+        }
+        p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #ccc;
+        }
+        .legend {
+            margin-top: 15px;
+            font-size: 0.8rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .color-box {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        .btn {
+            background: #4af;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #0cf;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h1>Chuveiro Atmosférico</h1>
+        <p><strong>Raio Cósmico Primário</strong> colide com os átomos da alta atmosfera, desencadeando uma cascata de partículas secundárias.</p>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="color-box" style="background: #ff3333;"></div> Raio Primário (Protão/Núcleo)</div>
+            <div class="legend-item"><div class="color-box" style="background: #33ff33;"></div> Piões / Mesões</div>
+            <div class="legend-item"><div class="color-box" style="background: #33ffff;"></div> Muões (Chegam ao solo)</div>
+            <div class="legend-item"><div class="color-box" style="background: #ffff33;"></div> Eletrões / Fotões</div>
+        </div>
+
+        <button class="btn" onclick="triggerShower()">Disparar Raio Cósmico</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Ajustar tamanho do canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Estrutura para as partículas
+        class Particle {
+            constructor(x, y, vx, vy, type, generation = 0) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.type = type; // 'primary', 'pion', 'muon', 'em' (eletromagnético)
+                this.generation = generation;
+                this.active = true;
+                this.history = [];
+                this.maxHistory = 15;
+                
+                // Definir cores
+                if(type === 'primary') this.color = '#ff3333';
+                else if(type === 'pion') this.color = '#33ff33';
+                else if(type === 'muon') this.color = '#33ffff';
+                else this.color = '#ffff33';
+            }
+
+            update() {
+                this.history.push({x: this.x, y: this.y});
+                if(this.history.length > this.maxHistory) {
+                    this.history.shift();
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Força de arrasto/decaimento simulado pela perda de velocidade na atmosfera
+                if (this.type === 'em') {
+                    this.vx += (Math.random() - 0.5) * 0.5; // Dispersão lateral maior
+                }
+
+                // Desativar se sair do ecrã
+                if(this.y > canvas.height || this.x < 0 || this.x > canvas.width) {
+                    this.active = false;
+                }
+            }
+
+            draw() {
+                if(this.history.length < 2) return;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.type === 'primary' ? 3 : 1.5;
+                ctx.moveTo(this.history[0].x, this.history[0].y);
+                
+                for(let i = 1; i < this.history.length; i++) {
+                    ctx.lineTo(this.history[i].x, this.history[i].y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        let particles = [];
+
+        // Função para criar o chuveiro (colisão)
+        function createShower(parentX, parentY, gen) {
+            if (gen > 4) return; // Limitar cascata para performance e visual
+
+            let numChildren = Math.floor(Math.random() * 3) + 3; // 3 a 5 novas partículas
+            
+            for(let i = 0; i < numChildren; i++) {
+                let angle = Math.PI/2 + (Math.random() - 0.5) * 0.6; // Direcionado para baixo com abertura
+                let speed = (Math.random() * 3) + 4;
+                let vx = Math.cos(angle) * speed;
+                let vy = Math.sin(angle) * speed;
+                
+                // Determinar o tipo de partícula secundária
+                let type = 'em';
+                let rand = Math.random();
+                if (gen === 1) {
+                    type = rand > 0.4 ? 'pion' : 'muon';
+                } else if (gen === 2) {
+                    type = rand > 0.5 ? 'muon' : 'em';
+                }
+
+                particles.push(new Particle(parentX, parentY, vx, vy, type, gen));
+            }
+        }
+
+        // Disparar raio primário de forma manual ou automática
+        function triggerShower() {
+            let startX = Math.random() * canvas.width;
+            let targetX = startX + (Math.random() - 0.5) * 200;
+            let angle = Math.atan2(canvas.height * 0.3, targetX - startX);
+            let speed = 12;
+            
+            particles.push(new Particle(startX, 0, Math.cos(angle)*speed, Math.sin(angle)*speed, 'primary', 1));
+        }
+
+        // Loop de Animação
+        function animate() {
+            // Fundo semi-transparente para criar efeito de "glow/rasto" suave
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar linhas que representam as camadas da atmosfera (visual)
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height * 0.3); ctx.lineTo(canvas.width, canvas.height * 0.3);
+            ctx.moveTo(0, canvas.height * 0.6); ctx.lineTo(canvas.width, canvas.height * 0.6);
+            ctx.stroke();
+
+            // Texto das camadas
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.font = '12px sans-serif';
+            ctx.fillText("Alta Atmosfera (~30km)", 10, canvas.height * 0.28);
+            ctx.fillText("Média Atmosfera", 10, canvas.height * 0.58);
+            ctx.fillText("Solo (Detetores)", 10, canvas.height - 10);
+
+            // Atualizar e desenhar partículas
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.update();
+                p.draw();
+
+                // Simular colisão na alta atmosfera para o raio primário
+                if (p.type === 'primary' && p.y > canvas.height * 0.3) {
+                    p.active = false;
+                    createShower(p.x, p.y, 2);
+                }
+                
+                // Simular decaimento subsequente na média atmosfera
+                if (p.type === 'pion' && p.y > canvas.height * 0.55 && Math.random() < 0.05) {
+                    p.active = false;
+                    createShower(p.x, p.y, 3);
+                }
+
+                // Remover partículas inativas
+                if (!p.active) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Disparar raios aleatórios em background (frequência controlada)
+            if (Math.random() < 0.02) {
+                triggerShower();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Iniciar
+        animate();
+    </script>
+</body>
+</html>

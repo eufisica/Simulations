@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Lançamento de Projéteis - eufisica</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .controls, .results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group span {
+            float: right;
+            font-weight: normal;
+            color: #007bff;
+        }
+
+        .results h2, .controls h2 {
+            margin-top: 0;
+            color: #444;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        .result-item {
+            margin: 15px 0;
+            font-size: 1.1em;
+        }
+
+        .result-item strong {
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: white;
+        }
+
+        #btnPlay { background-color: #28a745; }
+        #btnPlay:hover { background-color: #218838; }
+
+        #btnPausa { background-color: #ffc107; color: #333; }
+        #btnPausa:hover { background-color: #e0a800; }
+
+        #btnReiniciar { background-color: #dc3545; }
+        #btnReiniciar:hover { background-color: #c82333; }
+
+        button:disabled {
+            background-color: #ccc !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+
+        .canvas-container {
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            width: 100%;
+            height: 450px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Simulador de Lançamento Oblíquo - José Gonçalves (eufisica)</h1>
+
+    <div class="container">
+        <div class="controls">
+            <h2>Condições iniciais</h2>
+            
+            <div class="control-group">
+                <label for="vel">Velocidade Inicial (<i>v</i><sub>0</sub>): <span id="vel-val">20</span> m/s</label>
+                <input type="range" id="vel" min="1" max="50" value="20" step="1">
+            </div>
+
+            <div class="control-group">
+                <label for="angulo">Ângulo de Lançamento (<i>&theta;</i>): <span id="angulo-val">45</span>°</label>
+                <input type="range" id="angulo" min="0" max="90" value="45" step="1">
+            </div>
+
+            <div class="control-group">
+                <label for="altura">Altura Inicial (<i>y</i><sub>0</sub>): <span id="altura-val">0</span> m</label>
+                <input type="range" id="altura" min="0" max="50" value="0" step="0.5">
+            </div>
+
+            <div class="control-group">
+                <label for="ar">Resistência do Ar (<i>k</i>): <span id="ar-val">0.00</span></label>
+                <input type="range" id="ar" min="0" max="0.2" value="0" step="0.01">
+            </div>
+
+            <div class="control-group">
+                <label for="atrito">Atrito no Solo (<i>&mu;</i>): <span id="atrito-val">0.00</span></label>
+                <input type="range" id="atrito" min="0" max="0.8" value="0" step="0.02">
+            </div>
+
+            <div class="button-group">
+                <button id="btnPlay">Play</button>
+                <button id="btnPausa" disabled>Pausa</button>
+                <button id="btnReiniciar">Reiniciar</button>
+            </div>
+        </div>
+
+        <div class="results">
+            <h2>Resultados Reais (Simulados)</h2>
+            <div class="result-item">Alcance Horizontal Final: <strong id="res-alcance">0.00</strong> m</div>
+            <div class="result-item">Altura Máxima Atingida: <strong id="res-altura-max">0.00</strong> m</div>
+            <div class="result-item">Tempo Total de Voo/Movimento: <strong id="res-tempo">0.00</strong> s</div>
+            <div class="result-item" style="border-top: 1px solid #eee; padding-top: 10px; color: #666;">
+                Tempo Atual Animação: <strong id="res-tempo-atual" style="color: #007bff;">0.00</strong> s
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Inputs
+        const inputVel = document.getElementById('vel');
+        const inputAngulo = document.getElementById('angulo');
+        const inputAltura = document.getElementById('altura');
+        const inputAr = document.getElementById('ar');
+        const inputAtrito = document.getElementById('atrito');
+        
+        // Botões
+        const btnPlay = document.getElementById('btnPlay');
+        const btnPausa = document.getElementById('btnPausa');
+        const btnReiniciar = document.getElementById('btnReiniciar');
+
+        // Outputs Texto
+        const valVel = document.getElementById('vel-val');
+        const valAngulo = document.getElementById('angulo-val');
+        const valAltura = document.getElementById('altura-val');
+        const valAr = document.getElementById('ar-val');
+        const valAtrito = document.getElementById('atrito-val');
+
+        const resAlcance = document.getElementById('res-alcance');
+        const resAlturaMax = document.getElementById('res-altura-max');
+        const resTempo = document.getElementById('res-tempo');
+        const resTempoAtual = document.getElementById('res-tempo-atual');
+
+        // Variáveis de Física
+        const g = 9.81; 
+        let v0, anguloGraus, y0, kAr, muAtrito; 
+        let tLimiteMax, alcanceFinal, hMaxAtingida; 
+
+        let animationRequestId;
+        let estaAAnimar = false;
+        let tempoSimulacaoDecorrido = 0; 
+        
+        const dt = 0.015; 
+        let rastoPosicoes = [];
+
+        function preSimularTrajetoria() {
+            v0 = parseFloat(inputVel.value);
+            anguloGraus = parseFloat(inputAngulo.value);
+            y0 = parseFloat(inputAltura.value);
+            kAr = parseFloat(inputAr.value);
+            muAtrito = parseFloat(inputAtrito.value);
+
+            valVel.innerText = v0;
+            valAngulo.innerText = anguloGraus;
+            valAltura.innerText = y0;
+            valAr.innerText = kAr.toFixed(2);
+            valAtrito.innerText = muAtrito.toFixed(2);
+
+            let theta = (anguloGraus * Math.PI) / 180;
+            let vx = v0 * Math.cos(theta);
+            let vy = v0 * Math.sin(theta);
+            let x = 0;
+            let y = y0;
+            let t = 0;
+
+            hMaxAtingida = y0;
+            rastoPosicoes = []; 
+
+            const segurancaMaxTempo = 30; 
+            while (t < segurancaMaxTempo) {
+                rastoPosicoes.push({ x: x, y: y, t: t });
+                if (y > hMaxAtingida) hMaxAtingida = y;
+
+                let ax = 0;
+                let ay = 0;
+
+                // ALTERAÇÃO CRÍTICA: Só considera que está no solo se o ângulo for 0 OU se o tempo já passou do início (t > 0) e a bola caiu (vy <= 0)
+                let noSolo = (y <= 0 && (anguloGraus === 0 || (t > 0 && vy <= 0)));
+
+                if (!noSolo) {
+                    // No Ar: Resistência do ar afeta ambos os eixos
+                    let vModulo = Math.sqrt(vx * vx + vy * vy);
+                    ax = -kAr * vx * vModulo;
+                    ay = -g - (kAr * vy * vModulo);
+                } else {
+                    // No Solo: Atrito desacelera a horizontal, física vertical é zerada
+                    ay = 0;
+                    vy = 0;
+                    y = 0;
+                    if (Math.abs(vx) > 0.05) {
+                        ax = -Math.sign(vx) * muAtrito * g;
+                    } else {
+                        ax = 0;
+                        vx = 0;
+                    }
+                }
+
+                // Integração de Euler
+                vx += ax * dt;
+                vy += ay * dt;
+                x += vx * dt;
+                y += vy * dt;
+                t += dt;
+
+                // Condição de fim da simulação: parado no solo
+                if (noSolo && Math.abs(vx) <= 0.05) {
+                    vx = 0;
+                    rastoPosicoes.push({ x: x, y: y, t: t });
+                    break;
+                }
+            }
+
+            tLimiteMax = t;
+            alcanceFinal = x;
+
+            resAlcance.innerText = alcanceFinal.toFixed(2);
+            resAlturaMax.innerText = hMaxAtingida.toFixed(2);
+            
+            if (tLimiteMax >= 29.9 && vx > 0) {
+                resTempo.innerText = "∞ (Sem atrito)";
+            } else {
+                resTempo.innerText = tLimiteMax.toFixed(2);
+            }
+        }
+
+        function resetFisicaEPrevisualizar() {
+            pararAnimação(); 
+            tempoSimulacaoDecorrido = 0;
+            resTempoAtual.innerText = (0).toFixed(2);
+            desativarInputs(false); 
+
+            preSimularTrajetoria();
+            desenharCenarioCompleto(0);
+        }
+
+        function desenharCenarioCompleto(tFisicoAtual) {
+            if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = { x: 60, y: 60 };
+            const maxValorX = Math.max(alcanceFinal, 10);
+            const maxValorY = Math.max(hMaxAtingida, y0, 10);
+
+            const escalaX = (canvas.width - padding.x * 2) / maxValorX;
+            const escalaY = (canvas.height - padding.y * 2) / maxValorY;
+            const escala = Math.min(escalaX, escalaY);
+
+            const tX = (x) => padding.x + x * escala;
+            const tY = (y) => canvas.height - padding.y - (y * escala);
+
+            // Solo
+            ctx.beginPath();
+            ctx.moveTo(tX(-10), tY(0));
+            ctx.lineTo(tX(maxValorX + 10), tY(0));
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Mapear tempo atual para o frame correspondente
+            let indiceMapeado = Math.floor(tFisicoAtual / dt);
+            if (indiceMapeado >= rastoPosicoes.length) {
+                indiceMapeado = rastoPosicoes.length - 1;
+            }
+            const estadoAtual = rastoPosicoes[indiceMapeado] || { x: 0, y: y0 };
+
+            // Trajetória teórica
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+            ctx.lineWidth = 1.5;
+            rastoPosicoes.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(tX(p.x), tY(p.y));
+                else ctx.lineTo(tX(p.x), tY(p.y));
+            });
+            ctx.stroke();
+
+            // Rasto dinâmico
+            for (let i = 0; i <= indiceMapeado; i += 3) {
+                let p = rastoPosicoes[i];
+                if(!p) break;
+                ctx.beginPath();
+                ctx.arc(tX(p.x), tY(p.y), 3, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgba(255, 87, 34, ${0.1 + (i / rastoPosicoes.length) * 0.6})`;
+                ctx.fill();
+            }
+
+            // Vetor velocidade
+            let vxAtual = 0, vyAtual = 0;
+            if (indiceMapeado < rastoPosicoes.length - 1) {
+                let p1 = rastoPosicoes[indiceMapeado];
+                let p2 = rastoPosicoes[indiceMapeado + 1];
+                vxAtual = (p2.x - p1.x) / dt;
+                vyAtual = (p2.y - p1.y) / dt;
+            }
+            const velocidadeModulo = Math.sqrt(vxAtual * vxAtual + vyAtual * vyAtual);
+
+            if (velocidadeModulo > 0.1) {
+                const comprimentoSeta = velocidadeModulo * 2.5; 
+                const anguloSeta = Math.atan2(-vyAtual, vxAtual);
+
+                const setaXFim = tX(estadoAtual.x) + comprimentoSeta * Math.cos(anguloSeta);
+                const setaYFim = tY(estadoAtual.y) + comprimentoSeta * Math.sin(anguloSeta);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(tX(estadoAtual.x), tY(estadoAtual.y));
+                ctx.lineTo(setaXFim, setaYFim);
+                ctx.strokeStyle = '#28a745'; 
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.translate(setaXFim, setaYFim);
+                ctx.rotate(anguloSeta);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-10, -5);
+                ctx.lineTo(-10, 5);
+                ctx.fillStyle = '#28a745';
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Esfera principal
+            ctx.beginPath();
+            ctx.arc(tX(estadoAtual.x), tY(estadoAtual.y), 10, 0, 2 * Math.PI);
+            const gradiente = ctx.createRadialGradient(tX(estadoAtual.x)-3, tY(estadoAtual.y)-3, 1, tX(estadoAtual.x), tY(estadoAtual.y), 10);
+            gradiente.addColorStop(0, '#80bdff'); 
+            gradiente.addColorStop(1, '#007bff'); 
+            ctx.fillStyle = gradiente;
+            ctx.fill();
+            ctx.strokeStyle = '#0056b3';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        function frameDeAnimacao() {
+            if (!estaAAnimar) return;
+
+            tempoSimulacaoDecorrido += dt;
+
+            desenharCenarioCompleto(tempoSimulacaoDecorrido);
+            resTempoAtual.innerText = Math.min(tempoSimulacaoDecorrido, tLimiteMax).toFixed(2);
+
+            if (tempoSimulacaoDecorrido >= tLimiteMax) {
+                finalizarAnimacao();
+            } else {
+                animationRequestId = requestAnimationFrame(frameDeAnimacao);
+            }
+        }
+
+        function iniciarAnimacao() {
+            if (estaAAnimar) return;
+            if (tempoSimulacaoDecorrido >= tLimiteMax) {
+                tempoSimulacaoDecorrido = 0;
+            }
+
+            estaAAnimar = true;
+            desativarInputs(true); 
+            
+            btnPlay.disabled = true;
+            btnPlay.innerText = "Continuar"; 
+            btnPausa.disabled = false;
+
+            animationRequestId = requestAnimationFrame(frameDeAnimacao);
+        }
+
+        function pausarAnimacao() {
+            estaAAnimar = false;
+            cancelAnimationFrame(animationRequestId);
+            btnPlay.disabled = false;
+            btnPausa.disabled = true;
+        }
+
+        function pararAnimação() {
+            estaAAnimar = false;
+            cancelAnimationFrame(animationRequestId);
+            btnPlay.disabled = false;
+            btnPlay.innerText = "Play";
+            btnPausa.disabled = true;
+        }
+
+        function finalizarAnimacao() {
+            pararAnimação();
+            desativarInputs(false);
+            btnPlay.innerText = "Play";
+        }
+
+        function desativarInputs(desativar) {
+            inputVel.disabled = desativar;
+            inputAngulo.disabled = desativar;
+            inputAltura.disabled = desativar;
+            inputAr.disabled = desativar;
+            inputAtrito.disabled = desativar;
+        }
+
+        inputVel.addEventListener('input', resetFisicaEPrevisualizar);
+        inputAngulo.addEventListener('input', resetFisicaEPrevisualizar);
+        inputAltura.addEventListener('input', resetFisicaEPrevisualizar);
+        inputAr.addEventListener('input', resetFisicaEPrevisualizar);
+        inputAtrito.addEventListener('input', resetFisicaEPrevisualizar);
+        
+        btnPlay.addEventListener('click', iniciarAnimacao);
+        btnPausa.addEventListener('click', pausarAnimacao);
+        btnReiniciar.addEventListener('click', resetFisicaEPrevisualizar);
+
+        window.addEventListener('resize', () => {
+            desenharCenarioCompleto(tempoSimulacaoDecorrido);
+        });
+
+        resetFisicaEPrevisualizar();
+    </script>
+</body>
+</html>
