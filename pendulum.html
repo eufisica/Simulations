@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Física: Dinâmica do Pêndulo Gravítico</title>
+    <style>
+        :root {
+            --bg-color: #0f121a;
+            --panel-color: #181d29;
+            --panel-border: #283246;
+            --text-main: #e6ebf5;
+            --text-muted: #6e7d96;
+            --blue-neon: #00bfff;
+            --red-neon: #ff2e63;
+            --green-accent: #00e18c;
+            --dark-gray: #323741;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard {
+            width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .panel {
+            background-color: var(--panel-color);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        #canvas-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 8px;
+        }
+
+        .telemetry-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .box-telemetry {
+            width: 250px;
+            padding: 12px;
+            background-color: var(--panel-color);
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .box-blue { border: 1px solid var(--blue-neon); }
+        .box-blue h3 { color: var(--blue-neon); margin: 0 0 5px 0; font-size: 15px; }
+
+        .box-red { border: 1px solid var(--red-neon); }
+        .box-red h3 { color: var(--red-neon); margin: 0 0 5px 0; font-size: 15px; }
+
+        .controls-panel {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .sliders-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider-container label {
+            width: 160px;
+            font-size: 15px;
+        }
+
+        input[type=range] {
+            width: 200px;
+            background: var(--dark-gray);
+            border-radius: 2px;
+            height: 6px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--text-main);
+            cursor: pointer;
+        }
+
+        .buttons-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            width: 110px;
+            height: 38px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #btn-pause { background-color: var(--green-accent); color: var(--bg-color); }
+        #btn-pause.paused { background-color: var(--dark-gray); color: var(--text-main); }
+        #btn-reset { background-color: var(--red-neon); color: var(--text-main); }
+
+        .theory-notes {
+            width: 450px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .theory-notes h4 {
+            color: var(--text-main);
+            margin: 0 0 5px 0;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <h1>Estudo Dinâmico do Pêndulo Gravítico</h1>
+
+    <div id="canvas-container">
+        <div class="panel">
+            <canvas id="canvas-anim" width="520" height="360"></canvas>
+        </div>
+        <div class="panel">
+            <canvas id="canvas-graph" width="590" height="360"></canvas>
+        </div>
+    </div>
+
+    <div class="telemetry-container">
+        <div class="box-telemetry box-blue">
+            <h3>Modelo Linear (Fixo 10°)</h3>
+            <div id="tel-sm-period">Período (T): -- s</div>
+            <div id="tel-sm-freq">Frequência (f): -- Hz</div>
+        </div>
+        <div class="box-telemetry box-red">
+            <h3>Modelo Real (Não-Linear)</h3>
+            <div id="tel-lg-period">Período (T): -- s</div>
+            <div id="tel-lg-freq">Frequência (f): -- Hz</div>
+        </div>
+    </div>
+
+    <div class="panel controls-panel">
+        <div class="sliders-group">
+            <div class="slider-container">
+                <label id="lbl-len">Comprimento (L): 1.50 m</label>
+                <input type="range" id="slide-len" min="0.5" max="2.5" step="0.01" value="1.5">
+            </div>
+            <div class="slider-container">
+                <label id="lbl-ang">Ângulo Inicial: 60.0°</label>
+                <input type="range" id="slide-ang" min="10" max="90" step="1" value="60">
+            </div>
+        </div>
+
+        <div class="buttons-group">
+            <button id="btn-pause">PAUSA</button>
+            <button id="btn-reset">REINICIAR</button>
+        </div>
+
+        <div class="theory-notes">
+            <h4>Observação Teórica:</h4>
+            Nota como em amplitudes elevadas a linha vermelha perde frequência em relação à azul. Isto ocorre porque a aproximação linear sin(&theta;) &asymp; &theta; falha e despreza o atraso real.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configurações e Elementos do DOM
+    const canvasAnim = document.getElementById('canvas-anim');
+    const ctxAnim = canvasAnim.getContext('2d');
+    const canvasGraph = document.getElementById('canvas-graph');
+    const ctxGraph = canvasGraph.getContext('2d');
+
+    const slideLen = document.getElementById('slide-len');
+    const slideAng = document.getElementById('slide-ang');
+    const lblLen = document.getElementById('lbl-len');
+    const lblAng = document.getElementById('lbl-ang');
+    const btnPause = document.getElementById('btn-pause');
+    const btnReset = document.getElementById('btn-reset');
+
+    const telSmPeriod = document.getElementById('tel-sm-period');
+    const telSmFreq = document.getElementById('tel-sm-freq');
+    const telLgPeriod = document.getElementById('tel-lg-period');
+    const telLgFreq = document.getElementById('tel-lg-freq');
+
+    // Constantes Físicas
+    const G = 9.81;
+    const PIXELS_PER_METER = 130;
+    const FPS = 60;
+    const DT = 1.0 / FPS;
+    const MAX_HISTORY = 300;
+
+    // Estado da Simulação
+    let length = parseFloat(slideLen.value);
+    let theta0_small = 10 * Math.PI / 180;
+    let theta0_large = parseInt(slideAng.value) * Math.PI / 180;
+    
+    let timeElapsed = 0.0;
+    let isPaused = false;
+
+    let historySmall = [];
+    let historyLarge = [];
+
+    // Estado interno do resolvedor numérico (Runge-Kutta 4 para ângulos grandes)
+    // y[0] = theta, y[1] = omega
+    let y_large = [theta0_large, 0.0]; 
+
+    function rk4Step(y, l, dt) {
+        function derivatives(y_state) {
+            return [y_state[1], -(G / l) * Math.sin(y_state[0])];
+        }
+        
+        let k1 = derivatives(y);
+        let k2 = derivatives([y[0] + 0.5 * dt * k1[0], y[1] + 0.5 * dt * k1[1]]);
+        let k3 = derivatives([y[0] + 0.5 * dt * k2[0], y[1] + 0.5 * dt * k2[1]]);
+        let k4 = derivatives([y[0] + dt * k3[0], y[1] + dt * k3[1]]);
+        
+        return [
+            y[0] + (dt / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+            y[1] + (dt / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])
+        ];
+    }
+
+    function getSmallAngle(t, l, th0) {
+        let omega0 = Math.sqrt(G / l);
+        return th0 * Math.cos(omega0 * t);
+    }
+
+    function calculatePeriods() {
+        let T_small = 2 * Math.PI * Math.sqrt(length / G);
+        let th = theta0_large;
+        let T_large = T_small * (1 + (1/16)*th*th + (11/3072)*Math.pow(th,4) + (173/737280)*Math.pow(th,6));
+        
+        telSmPeriod.innerText = `Período (T): ${T_small.toFixed(3)} s`;
+        telSmFreq.innerText = `Frequência (f): ${(1/T_small).toFixed(2)} Hz`;
+        telLgPeriod.innerText = `Período (T): ${T_large.toFixed(3)} s`;
+        telLgFreq.innerText = `Frequência (f): ${(1/T_large).toFixed(2)} Hz`;
+    }
+
+    function resetBuffers() {
+        timeElapsed = 0.0;
+        y_large = [theta0_large, 0.0];
+        historySmall = [length * Math.sin(theta0_small)];
+        historyLarge = [length * Math.sin(theta0_large)];
+    }
+
+    // --- Listeners de Eventos (UI) ---
+    slideLen.addEventListener('input', (e) => {
+        length = parseFloat(e.target.value);
+        lblLen.innerText = `Comprimento (L): ${length.toFixed(2)} m`;
+        resetBuffers();
+        calculatePeriods();
+    });
+
+    slideAng.addEventListener('input', (e) => {
+        let deg = parseInt(e.target.value);
+        theta0_large = deg * Math.PI / 180;
+        lblAng.innerText = `Ângulo Inicial: ${deg.toFixed(1)}°`;
+        resetBuffers();
+        calculatePeriods();
+    });
+
+    btnPause.addEventListener('click', () => {
+        isPaused = !isPaused;
+        btnPause.innerText = isPaused ? "PLAY" : "PAUSA";
+        btnPause.className = isPaused ? "paused" : "";
+    });
+
+    btnReset.addEventListener('click', () => {
+        resetBuffers();
+    });
+
+    // --- Loop de Desenho e Atualização ---
+    function drawGrid(ctx, w, h, size) {
+        ctx.strokeStyle = '#1e2636';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += size) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += size) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+    }
+
+    function update() {
+        let theta_small = getSmallAngle(timeElapsed, length, theta0_small);
+        let theta_large = y_large[0];
+
+        if (!isPaused) {
+            timeElapsed += DT;
+            // Atualiza física não-linear exata via RK4 de passo fixo (Equivalente ao solver em Python)
+            y_large = rk4Step(y_large, length, DT);
+
+            historySmall.push(length * Math.sin(theta_small));
+            historyLarge.push(length * Math.sin(theta_large));
+
+            if (historySmall.length > MAX_HISTORY) historySmall.shift();
+            if (historyLarge.length > MAX_HISTORY) historyLarge.shift();
+        }
+
+        // --- RENDER DA ANIMAÇÃO ---
+        ctxAnim.clearRect(0, 0, canvasAnim.width, canvasAnim.height);
+        let cx = canvasAnim.width / 2;
+        let cy = 30;
+        let pLen = length * PIXELS_PER_METER;
+
+        // Suporte horizontal do pêndulo
+        ctxAnim.strokeStyle = '#6e7d96';
+        ctxAnim.lineWidth = 2;
+        ctxAnim.beginPath(); ctxAnim.moveTo(cx - 80, cy); ctxAnim.lineTo(cx + 80, cy); ctxAnim.stroke();
+
+        // Pêndulo Azul (Linear)
+        let x_sm = cx + pLen * Math.sin(theta_small);
+        let y_sm = cy + pLen * Math.cos(theta_small);
+        ctxAnim.strokeStyle = '#00bfff';
+        ctxAnim.lineWidth = 2;
+        ctxAnim.beginPath(); ctxAnim.moveTo(cx, cy); ctxAnim.lineTo(x_sm, y_sm); ctxAnim.stroke();
+        ctxAnim.fillStyle = '#00bfff';
+        ctxAnim.beginPath(); ctxAnim.arc(x_sm, y_sm, 11, 0, 2*Math.PI); ctxAnim.fill();
+
+        // Pêndulo Vermelho (Real)
+        let x_lg = cx + pLen * Math.sin(theta_large);
+        let y_lg = cy + pLen * Math.cos(theta_large);
+        ctxAnim.strokeStyle = '#ff2e63';
+        ctxAnim.lineWidth = 2;
+        ctxAnim.beginPath(); ctxAnim.moveTo(cx, cy); ctxAnim.lineTo(x_lg, y_lg); ctxAnim.stroke();
+        ctxAnim.fillStyle = '#ff2e63';
+        ctxAnim.beginPath(); ctxAnim.arc(x_lg, y_lg, 11, 0, 2*Math.PI); ctxAnim.fill();
+
+        // --- RENDER DO GRÁFICO ---
+        ctxGraph.clearRect(0, 0, canvasGraph.width, canvasGraph.height);
+        drawGrid(ctxGraph, canvasGraph.width, canvasGraph.height, 24);
+
+        let gCenterY = canvasGraph.height / 2;
+        ctxGraph.strokeStyle = '#283246';
+        ctxGraph.lineWidth = 2;
+        ctxGraph.beginPath(); ctxGraph.moveTo(0, gCenterY); ctxGraph.lineTo(canvasGraph.width, gCenterY); ctxGraph.stroke();
+
+        // Títulos e Textos do Gráfico
+        ctxGraph.fillStyle = '#e6ebf5';
+        ctxGraph.font = "bold 15px Segoe UI";
+        ctxGraph.fillText("Gráfico Estatístico: Posição Horizontal x(t)", 15, 25);
+        ctxGraph.fillStyle = '#6e7d96';
+        ctxGraph.font = "13px Segoe UI";
+        ctxGraph.fillText("+x (Direita)", 15, 45);
+        ctxGraph.fillText("-x (Esquerda)", 15, canvasGraph.height - 15);
+
+        let scaleY = canvasGraph.height / 5.5;
+
+        // Linha Azul do Gráfico
+        if (historySmall.length > 1) {
+            ctxGraph.strokeStyle = '#00bfff';
+            ctxGraph.lineWidth = 2;
+            ctxGraph.beginPath();
+            for (let i = 0; i < historySmall.length; i++) {
+                let gx = i * (canvasGraph.width / MAX_HISTORY);
+                let gy = gCenterY - (historySmall[i] * scaleY);
+                if (i === 0) ctxGraph.moveTo(gx, gy); else ctxGraph.lineTo(gx, gy);
+            }
+            ctxGraph.stroke();
+        }
+
+        // Linha Vermelha do Gráfico
+        if (historyLarge.length > 1) {
+            ctxGraph.strokeStyle = '#ff2e63';
+            ctxGraph.lineWidth = 2;
+            ctxGraph.beginPath();
+            for (let i = 0; i < historyLarge.length; i++) {
+                let gx = i * (canvasGraph.width / MAX_HISTORY);
+                let gy = gCenterY - (historyLarge[i] * scaleY);
+                if (i === 0) ctxGraph.moveTo(gx, gy); else ctxGraph.lineTo(gx, gy);
+            }
+            ctxGraph.stroke();
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    // Inicialização da simulação
+    resetBuffers();
+    calculatePeriods();
+    requestAnimationFrame(update);
+</script>
+
+</body>
+</html>
