@@ -458,81 +458,81 @@
     "Dezasseis-avos (R32)": [
         {
             "eq1": "Alemanha",
-            "g1": 0,
-            "eq2": "Paraguai",
-            "g2": 1
-        },
-        {
-            "eq1": "França",
             "g1": 4,
-            "eq2": "Suécia",
+            "eq2": "Paraguai",
             "g2": 5
         },
         {
-            "eq1": "África do Sul",
+            "eq1": "França",
             "g1": 3,
-            "eq2": "Canadá",
+            "eq2": "Suécia",
             "g2": 0
         },
         {
-            "eq1": "Países Baixos",
-            "g1": 2,
-            "eq2": "Marrocos",
+            "eq1": "África do Sul",
+            "g1": 0,
+            "eq2": "Canadá",
             "g2": 1
         },
         {
-            "eq1": "Brasil",
+            "eq1": "Países Baixos",
             "g1": 3,
-            "eq2": "Japão",
+            "eq2": "Marrocos",
             "g2": 4
         },
         {
+            "eq1": "Brasil",
+            "g1": 2,
+            "eq2": "Japão",
+            "g2": 1
+        },
+        {
             "eq1": "Costa do Marfim",
-            "g1": 3,
+            "g1": 1,
             "eq2": "Noruega",
-            "g2": 0
+            "g2": 2
         },
         {
             "eq1": "México",
-            "g1": 3,
+            "g1": 2,
             "eq2": "Equador",
-            "g2": 2
+            "g2": 0
         },
         {
             "eq1": "Inglaterra",
             "g1": 2,
             "eq2": "Congo",
-            "g2": 0
+            "g2": 1
         },
         {
             "eq1": "Portugal",
-            "g1": 3,
+            "g1": 2,
             "eq2": "Croácia",
-            "g2": 2
+            "g2": 1
         },
         {
             "eq1": "Espanha",
-            "g1": 2,
+            "g1": 3,
             "eq2": "Áustria",
             "g2": 0
         },
         {
             "eq1": "EUA",
-            "g1": 1,
-            "eq2": "Bósnia & Herzegovina",
-            "g2": 2
-        },
-        {
-            "eq1": "Bélgica",
             "g1": 2,
-            "eq2": "Senegal",
+            "eq2": "Bósnia & Herzegovina",
             "g2": 0
         },
         {
+            "eq1": "Bélgica",
+            "g1": 3,
+            "eq2": "Senegal",
+            "g2": 2
+        },
+        {
             "eq1": "Argentina",
-            "g1": 2,
+            "g1": 3,
             "eq2": "Cabo Verde",
-            "g2": 1
+            "g2": 2
         },
         {
             "eq1": "Austrália",
@@ -542,23 +542,23 @@
         },
         {
             "eq1": "Suíça",
-            "g1": 1,
+            "g1": 2,
             "eq2": "Argélia",
             "g2": 0
         },
         {
             "eq1": "Colômbia",
-            "g1": 2,
+            "g1": 1,
             "eq2": "Gana",
-            "g2": 1
+            "g2": 0
         }
     ],
     "Oitavos-de-final": [
         {
             "eq1": "Paraguai",
-            "g1": "",
+            "g1": 0,
             "eq2": "França",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Canadá",
@@ -568,58 +568,58 @@
         },
         {
             "eq1": "Brasil",
-            "g1": "",
+            "g1": 1,
             "eq2": "Noruega",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "México",
+            "g1": 2,
+            "eq2": "Inglaterra",
+            "g2": 3
+        },
+        {
+            "eq1": "Portugal",
+            "g1": 0,
+            "eq2": "Espanha",
+            "g2": 1
+        },
+        {
+            "eq1": "EUA",
+            "g1": 1,
+            "eq2": "Bélgica",
+            "g2": 4
+        },
+        {
+            "eq1": "Argentina",
+            "g1": 3,
+            "eq2": "Egito",
+            "g2": 2
+        },
+        {
+            "eq1": "Suíça",
+            "g1": 4,
+            "eq2": "Colômbia",
+            "g2": 3
+        }
+    ],
+    "Quartos-de-final": [
+        {
+            "eq1": "França",
+            "g1": 2,
+            "eq2": "Marrocos",
+            "g2": 0
+        },
+        {
+            "eq1": "Noruega",
             "g1": "",
             "eq2": "Inglaterra",
             "g2": ""
         },
         {
-            "eq1": "Portugal",
-            "g1": "",
-            "eq2": "Espanha",
-            "g2": ""
-        },
-        {
-            "eq1": "EUA",
+            "eq1": "Espanha",
             "g1": "",
             "eq2": "Bélgica",
-            "g2": ""
-        },
-        {
-            "eq1": "Argentina",
-            "g1": "",
-            "eq2": "Egito",
-            "g2": ""
-        },
-        {
-            "eq1": "Suíça",
-            "g1": "",
-            "eq2": "Colômbia",
-            "g2": ""
-        }
-    ],
-    "Quartos-de-final": [
-        {
-            "eq1": "Paraguai",
-            "g1": "",
-            "eq2": "Marrocos",
-            "g2": ""
-        },
-        {
-            "eq1": "Brasil",
-            "g1": "",
-            "eq2": "México",
-            "g2": ""
-        },
-        {
-            "eq1": "Portugal",
-            "g1": "",
-            "eq2": "EUA",
             "g2": ""
         },
         {
@@ -631,13 +631,13 @@
     ],
     "Meias-finais": [
         {
-            "eq1": "Paraguai",
+            "eq1": "França",
             "g1": "",
-            "eq2": "Brasil",
+            "eq2": "Noruega",
             "g2": ""
         },
         {
-            "eq1": "Portugal",
+            "eq1": "Espanha",
             "g1": "",
             "eq2": "Argentina",
             "g2": ""
@@ -645,7 +645,7 @@
     ],
     "Terceiro Lugar": [
         {
-            "eq1": "Brasil",
+            "eq1": "Noruega",
             "g1": "",
             "eq2": "Argentina",
             "g2": ""
@@ -653,9 +653,9 @@
     ],
     "FINAL": [
         {
-            "eq1": "Paraguai",
+            "eq1": "França",
             "g1": "",
-            "eq2": "Portugal",
+            "eq2": "Espanha",
             "g2": ""
         }
     ]
