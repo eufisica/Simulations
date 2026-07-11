@@ -618,9 +618,9 @@
         },
         {
             "eq1": "Espanha",
-            "g1": "",
+            "g1": 2,
             "eq2": "Bélgica",
-            "g2": ""
+            "g2": 1
         },
         {
             "eq1": "Argentina",
