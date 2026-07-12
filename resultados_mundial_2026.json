@@ -612,9 +612,9 @@
         },
         {
             "eq1": "Noruega",
-            "g1": "",
+            "g1": 1,
             "eq2": "Inglaterra",
-            "g2": ""
+            "g2": 2
         },
         {
             "eq1": "Espanha",
@@ -624,16 +624,16 @@
         },
         {
             "eq1": "Argentina",
-            "g1": "",
+            "g1": 3,
             "eq2": "Suíça",
-            "g2": ""
+            "g2": 1
         }
     ],
     "Meias-finais": [
         {
             "eq1": "França",
             "g1": "",
-            "eq2": "Noruega",
+            "eq2": "Inglaterra",
             "g2": ""
         },
         {
@@ -645,7 +645,7 @@
     ],
     "Terceiro Lugar": [
         {
-            "eq1": "Noruega",
+            "eq1": "Inglaterra",
             "g1": "",
             "eq2": "Argentina",
             "g2": ""
