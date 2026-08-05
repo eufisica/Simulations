@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ondas Sísmicas (P e S) | EUFISICA simulations</title>
+  
+  <!-- MathJax para renderização de equações em LaTeX -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent-p: #0284c7;
+      --accent-s: #d97706;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px;
+      max-width: 1250px;
+      margin: 0 auto;
+    }
+
+    /* Cabeçalho e Logótipo Animado (Sem Letras) */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Logótipo em SVG estilizado (Representação de deformação sísmica) */
+    .logo-svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .logo-fault {
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .logo-p-wave {
+      fill: none;
+      stroke: var(--accent-p);
+      stroke-width: 2.5;
+      animation: pulseCompress 2s ease-in-out infinite alternate;
+    }
+
+    .logo-s-wave {
+      fill: none;
+      stroke: var(--accent-s);
+      stroke-width: 2.5;
+      animation: pulseShear 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseCompress {
+      0% { transform: scaleX(0.8); }
+      100% { transform: scaleX(1.2); }
+    }
+
+    @keyframes pulseShear {
+      0% { transform: translateY(-3px); }
+      100% { transform: translateY(3px); }
+    }
+
+    .brand-title h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .brand-title .author {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Layout da Simulação */
+    .simulation-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 950px) {
+      .simulation-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .controls-panel {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Área dos Canvases */
+    .viewport-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .canvas-card {
+      background: var(--bg-card);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .canvas-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    canvas {
+      width: 100%;
+      height: 180px;
+      background-color: #fafafa;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      font-size: 0.825rem;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Secção Teórica e Explicação Física */
+    .theory-section {
+      background: var(--bg-card);
+      padding: 32px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .theory-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      color: var(--text-main);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .theory-section h3 {
+      font-size: 1.15rem;
+      margin: 20px 0 10px 0;
+      color: var(--primary);
+    }
+
+    .theory-section p {
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+
+    .equation-box {
+      background-color: var(--bg-main);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho com Logótipo Animado e Autoria -->
+  <header>
+    <div class="brand-container">
+      <svg class="logo-svg" viewBox="0 0 50 50">
+        <line class="logo-fault" x1="10" y1="40" x2="40" y2="10" />
+        <path class="logo-p-wave" d="M 10,15 Q 25,10 40,15" />
+        <path class="logo-s-wave" d="M 10,35 Q 25,40 40,35" />
+      </svg>
+      <div class="brand-title">
+        <h1>Ondas Sísmicas de Volume (P e S)</h1>
+        <div class="author">EUFISICA simulations</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contentor da Simulação -->
+  <div class="simulation-container">
+    
+    <!-- Painel de Controlo -->
+    <div class="controls-panel">
+      
+      <div class="control-group">
+        <label for="slider-freq">Frequência (\(f\)): <span id="val-freq">1.0 Hz</span></label>
+        <input type="range" id="slider-freq" min="0.2" max="2.5" step="0.1" value="1.0">
+      </div>
+
+      <div class="control-group">
+        <label for="slider-amp">Amplitude (\(A\)): <span id="val-amp">12 px</span></label>
+        <input type="range" id="slider-amp" min="4" max="24" step="1" value="12">
+      </div>
+
+      <div class="control-group">
+        <label for="slider-vp">Velocidade Onda P (\(v_P\)): <span id="val-vp">300 px/s</span></label>
+        <input type="range" id="slider-vp" min="150" max="450" step="10" value="300">
+      </div>
+
+      <div class="control-group">
+        <label for="slider-vs">Velocidade Onda S (\(v_S\)): <span id="val-vs">175 px/s</span></label>
+        <input type="range" id="slider-vs" min="80" max="300" step="10" value="175">
+      </div>
+
+      <div class="btn-group">
+        <button id="btn-play" class="btn-primary">Pausar</button>
+        <button id="btn-reset" class="btn-secondary">Reiniciar</button>
+      </div>
+
+    </div>
+
+    <!-- Viewport com Visualização Paralela de Ondas P e S -->
+    <div class="viewport-panel">
+      
+      <!-- Canvas Onda P -->
+      <div class="canvas-card">
+        <div class="canvas-title">
+          <span>Onda P (Primária / Compressional — Longitudional)</span>
+          <span style="color: var(--accent-p); font-size: 0.8rem;">Movimento paralelo à propagação</span>
+        </div>
+        <canvas id="canvasP"></canvas>
+      </div>
+
+      <!-- Canvas Onda S -->
+      <div class="canvas-card">
+        <div class="canvas-title">
+          <span>Onda S (Secundária / Cisalhamento — Transversal)</span>
+          <span style="color: var(--accent-s); font-size: 0.8rem;">Movimento perpendicular à propagação</span>
+        </div>
+        <canvas id="canvasS"></canvas>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background-color: var(--accent-p);"></div>
+          <span>Zonas de Compressão / Rarefação (P)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background-color: var(--accent-s);"></div>
+          <span>Deformação por Cisalhamento (S)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background-color: #dc2626;"></div>
+          <span>Partículas Rastreadas</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Explicação Física e Formulação Matemática -->
+  <section class="theory-section">
+    <h2>Explicação Física</h2>
+    <p>
+      As <strong>ondas sísmicas de volume</strong> são ondas elásticas que se propagam através do interior do planeta Terra na sequência de uma libertação súbita de energia (como um sismo ou uma explosão). Dividem-se fundamentalmente em dois tipos: <strong>Ondas P</strong> e <strong>Ondas S</strong>.
+    </p>
+
+    <h3>1. Ondas P (Primárias ou Compressionais)</h3>
+    <p>
+      São ondas <strong>longitudinais</strong>, o que significa que o movimento de oscilação das partículas do meio ocorre na mesma direção em que a onda se propaga. À medida que a onda avança, o meio sofre alternadamente compressões e rarefações (variações de volume sem alteração de forma). Por propagarem deformações de volume, deslocam-se em <em>sólidos, líquidos e gases</em>.
+    </p>
+
+    <h3>2. Ondas S (Secundárias ou de Cisalhamento)</h3>
+    <p>
+      São ondas <strong>transversais</strong>, nas quais as partículas do meio oscilam numa direção perpendicular à direção de propagação da onda. Estas ondas provocam uma alteração na forma das rochas sem alterar o seu volume. Uma vez que os fluidos (líquidos e gases) não possuem rigidez estrutural para suportar tensões de cisalhamento, as ondas S <em>propagam-se exclusivamente em meios sólidos</em> (facto histórico que permitiu demonstrar que o núcleo externo da Terra é líquido).
+    </p>
+
+    <h2>Formulação Matemática</h2>
+
+    <p>A propagação de ondas elásticas num meio homogéneo e isotrópico é regida pelas equações de Navier-Cauchy. A partir destas, derivam-se as velocidades características de cada onda:</p>
+
+    <h3>1. Velocidade da Onda P (\(v_P\))</h3>
+    <div class="equation-box">
+      $$v_P = \sqrt{\frac{K + \frac{4}{3}\mu}{\rho}} = \sqrt{\frac{\lambda + 2\mu}{\rho}}$$
+    </div>
+    <p>Onde:</p>
+    <ul>
+      <li>\(K\) é o módulo de incompressibilidade volumétrica (Bulk Modulus).</li>
+      <li>\(\mu\) é o módulo de rigidez ou de cisalhamento (Shear Modulus).</li>
+      <li>\(\lambda\) é a primeira constante de Lamé.</li>
+      <li>\(\rho\) é a densidade de massa do meio.</li>
+    </ul>
+
+    <h3>2. Velocidade da Onda S (\(v_S\))</h3>
+    <div class="equation-box">
+      $$v_S = \sqrt{\frac{\mu}{\rho}}$$
+    </div>
+    <p>
+      Como o módulo de rigidez de um líquido ou gás é nulo (\(\mu = 0\)), a velocidade da onda S em meios fluidos torna-se \((v_S = 0\).
+    </p>
+
+    <h3>3. Razão entre Velocidades (\(v_P / v_S\))</h3>
+    <p>
+      Em rochas sólidas da crosta terrestre, a razão típica entre as duas velocidades depende exclusivamente do coeficiente de Poisson (\(\nu\)):
+    </p>
+    <div class="equation-box">
+      $$\frac{v_P}{v_S} = \sqrt{\frac{2(1-\nu)}{1-2\nu}}$$
+    </div>
+    <p>
+      Para um sólido de Poisson ideal (\(\nu = 0.25\)), obtém-se \(v_P = \sqrt{3} \, v_S \approx 1.73 \, v_S\). É por esta razão que as ondas P chegam sempre em primeiro lugar aos sismógrafos.
+    </p>
+  </section>
+
+  <footer>
+    Desenvolvido por <strong>EUFISICA simulations</strong> &bullet; &copy; 2024 Todos os direitos reservados
+  </footer>
+
+  <!-- Lógica da Simulação em JavaScript -->
+  <script>
+    const canvasP = document.getElementById('canvasP');
+    const ctxP = canvasP.getContext('2d');
+
+    const canvasS = document.getElementById('canvasS');
+    const ctxS = canvasS.getContext('2d');
+
+    const sliderFreq = document.getElementById('slider-freq');
+    const sliderAmp = document.getElementById('slider-amp');
+    const sliderVp = document.getElementById('slider-vp');
+    const sliderVs = document.getElementById('slider-vs');
+
+    const valFreq = document.getElementById('val-freq');
+    const valAmp = document.getElementById('val-amp');
+    const valVp = document.getElementById('val-vp');
+    const valVs = document.getElementById('val-vs');
+
+    const btnPlay = document.getElementById('btn-play');
+    const btnReset = document.getElementById('btn-reset');
+
+    let isRunning = true;
+    let time = 0;
+    let lastTime = performance.now();
+
+    // Grelha de partículas
+    const rows = 10;
+    const cols = 55;
+
+    function resizeCanvases() {
+      const w = canvasP.parentElement.clientWidth - 32;
+      canvasP.width = w;
+      canvasP.height = 180;
+      canvasS.width = w;
+      canvasS.height = 180;
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    // Rótulos dos controlos
+    sliderFreq.addEventListener('input', (e) => valFreq.textContent = parseFloat(e.target.value).toFixed(1) + ' Hz');
+    sliderAmp.addEventListener('input', (e) => valAmp.textContent = e.target.value + ' px');
+    sliderVp.addEventListener('input', (e) => valVp.textContent = e.target.value + ' px/s');
+    sliderVs.addEventListener('input', (e) => valVs.textContent = e.target.value + ' px/s');
+
+    btnPlay.addEventListener('click', () => {
+      isRunning = !isRunning;
+      btnPlay.textContent = isRunning ? 'Pausar' : 'Iniciar';
+      btnPlay.className = isRunning ? 'btn-primary' : 'btn-secondary';
+    });
+
+    btnReset.addEventListener('click', () => {
+      time = 0;
+      draw();
+    });
+
+    function drawWaveP(freq, amp, vp) {
+      const w = canvasP.width;
+      const h = canvasP.height;
+      ctxP.clearRect(0, 0, w, h);
+
+      const k = (2 * Math.PI * freq) / vp;
+      const omega = 2 * Math.PI * freq;
+
+      const spacingX = w / (cols - 1);
+      const spacingY = h / (rows + 1);
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x0 = c * spacingX;
+          const y0 = (r + 1) * spacingY;
+
+          // Deslocamento longitudinal em x
+          const dx = amp * Math.cos(k * x0 - omega * time);
+
+          const x = x0 + dx;
+          const y = y0;
+
+          // Destacar algumas partículas para facilitar o rastreio visual
+          const isHighlighted = (c === 15 || c === 30 || c === 45) && (r === 4 || r === 5);
+
+          ctxP.fillStyle = isHighlighted ? '#dc2626' : '#0284c7';
+          ctxP.beginPath();
+          ctxP.arc(x, y, isHighlighted ? 4.5 : 2.5, 0, Math.PI * 2);
+          ctxP.fill();
+        }
+      }
+    }
+
+    function drawWaveS(freq, amp, vs) {
+      const w = canvasS.width;
+      const h = canvasS.height;
+      ctxS.clearRect(0, 0, w, h);
+
+      const k = (2 * Math.PI * freq) / vs;
+      const omega = 2 * Math.PI * freq;
+
+      const spacingX = w / (cols - 1);
+      const spacingY = h / (rows + 1);
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x0 = c * spacingX;
+          const y0 = (r + 1) * spacingY;
+
+          // Deslocamento transversal em y
+          const dy = amp * Math.sin(k * x0 - omega * time);
+
+          const x = x0;
+          const y = y0 + dy;
+
+          const isHighlighted = (c === 15 || c === 30 || c === 45) && (r === 4 || r === 5);
+
+          ctxS.fillStyle = isHighlighted ? '#dc2626' : '#d97706';
+          ctxS.beginPath();
+          ctxS.arc(x, y, isHighlighted ? 4.5 : 2.5, 0, Math.PI * 2);
+          ctxS.fill();
+        }
+      }
+    }
+
+    function draw() {
+      const freq = parseFloat(sliderFreq.value);
+      const amp = parseFloat(sliderAmp.value);
+      const vp = parseFloat(sliderVp.value);
+      const vs = parseFloat(sliderVs.value);
+
+      drawWaveP(freq, amp, vp);
+      drawWaveS(freq, amp, vs);
+    }
+
+    function loop(now) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (isRunning) {
+        time += dt;
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
