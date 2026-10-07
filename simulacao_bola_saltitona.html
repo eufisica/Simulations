@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queda Livre e Ressaltos Sucessivos — EUFISICA simulations</title>
+  <!-- Configuração do MathJax para Renderização de Equações -->
+    <script>
+        window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Chart.js para gráficos interativos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #0284c7;
+      --accent: #16a34a;
+      --danger: #dc2626;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 40px;
+    }
+
+    /* Header e Logótipo SVG Animado */
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-svg {
+      width: 52px;
+      height: 52px;
+    }
+
+    .spin-ring {
+      transform-origin: center;
+      animation: spin 12s linear infinite;
+    }
+
+    .pulse-core {
+      animation: pulse 2s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    .header-titles h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .header-titles p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* Navegação por Tabs */
+    .nav-tabs {
+      max-width: 1400px;
+      margin: 20px auto 0;
+      padding: 0 24px;
+      display: flex;
+      gap: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Conteúdo das Tabs */
+    .tab-content {
+      display: none;
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 24px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Layout da Simulação: Grid de 2 Colunas */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .sim-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    /* Form Controlo */
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .control-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+
+    /* Área da Simulação Visual (Canvas) */
+    .sim-viewport {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #simCanvas {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+      width: 100%;
+      max-width: 500px;
+      height: 520px;
+    }
+
+    .sim-status-bar {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 10px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+    }
+
+    .sim-status-bar.completed {
+      background: #f0fdf4;
+      color: var(--accent);
+      border-color: #bbf7d0;
+    }
+
+    /* Painel Direito: Tabela e Gráfico */
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Tabela de Dados */
+    .table-wrapper {
+      overflow-x: auto;
+      max-height: 240px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 10px;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .placeholder-msg {
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-style: italic;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+
+    /* Área do Gráfico */
+    .chart-box {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+
+    /* Caixas Estatísticas da Regressão Linear */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-card .label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Secção Teórica */
+    .theory-section {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .theory-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .theory-card h2 {
+      color: var(--primary);
+      font-size: 1.3rem;
+      margin-bottom: 14px;
+      border-bottom: 2px solid #eff6ff;
+      padding-bottom: 8px;
+    }
+
+    .theory-card h3 {
+      font-size: 1.05rem;
+      margin: 18px 0 8px;
+      color: var(--text-main);
+    }
+
+    .formula-box {
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      padding: 12px 18px;
+      margin: 14px 0;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 0 8px 8px 0;
+      overflow-x: auto;
+    }
+
+    /* Relatório Laboratorial Form */
+    .lab-form {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field label {
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .form-field input, .form-field textarea {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--card-bg);
+    }
+
+    .form-field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+      background: var(--card-bg);
+    }
+
+    @media print {
+      .header, .nav-tabs, .btn-group, .footer {
+        display: none;
+      }
+      .tab-content {
+        display: block !important;
+      }
+      .card {
+        box-shadow: none;
+        border: 1px solid #000;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho com Logótipo SVG Animado -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo-box">
+        <svg class="logo-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="8 5" class="spin-ring" />
+          <ellipse cx="50" cy="50" rx="36" ry="14" fill="none" stroke="#0284c7" stroke-width="2" transform="rotate(35 50 50)" />
+          <ellipse cx="50" cy="50" rx="36" ry="14" fill="none" stroke="#3b82f6" stroke-width="2" transform="rotate(-35 50 50)" />
+          <circle cx="50" cy="50" r="9" fill="#1d4ed8" class="pulse-core" />
+          <circle cx="82" cy="30" r="5" fill="#f59e0b" />
+        </svg>
+      </div>
+      <div class="header-titles">
+        <h1>Simulação do Movimento de Queda Livre e Ressaltos Sucessivos</h1>
+        <p>Análise do Coeficiente de Restituição, Perda de Energia Mecânica e Regressão Linear — EUFISICA simulations</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navegação por Separadores -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('simulacao')">🎮 Simulação & Gráfico</button>
+    <button class="tab-btn" onclick="switchTab('teoria')">📚 Fundamentação Teórica Detalhada</button>
+    <button class="tab-btn" onclick="switchTab('relatorio')">📝 Relatório Laboratorial Interativo</button>
+  </nav>
+
+  <!-- TAB 1: SIMULAÇÃO E GRÁFICO -->
+  <main id="tab-simulacao" class="tab-content active">
+    <div class="sim-grid">
+      
+      <!-- Coluna da Esquerda: Controlo dos Parâmetros -->
+      <div class="controls-col">
+        <div class="card">
+          <div class="card-title">🎛️ Parâmetros do Ensaio</div>
+          
+          <div class="control-group">
+            <label>Material da Bola (Preset):</label>
+            <select id="presetMaterial" onchange="applyMaterialPreset()">
+              <option value="basketball">Bola de Basquetebol (e ≈ 0.82)</option>
+              <option value="tennis">Bola de Ténis (e ≈ 0.75)</option>
+              <option value="superball" selected>Bola de Borracha Super (e ≈ 0.90)</option>
+              <option value="steel">Bola de Aço (e ≈ 0.55)</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>
+              <span>Altura Inicial ($h_0$):</span>
+              <span id="lblH0">2.50 m</span>
+            </label>
+            <input type="range" id="inputH0" min="0.80" max="4.50" step="0.10" value="2.50" oninput="updateControls()">
+          </div>
+
+          <div class="control-group">
+            <label>
+              <span>Coef. Restituição Teórico ($e$):</span>
+              <span id="lblE">0.90</span>
+            </label>
+            <input type="range" id="inputE" min="0.30" max="0.96" step="0.01" value="0.90" oninput="updateControls()">
+          </div>
+
+          <div class="control-group">
+            <label>Aceleração da Gravidade ($g$):</label>
+            <select id="selectG" onchange="updateControls()">
+              <option value="9.81" selected>Terra (g = 9.81 m/s²)</option>
+              <option value="1.62">Lua (g = 1.62 m/s²)</option>
+              <option value="3.71">Marte (g = 3.71 m/s²)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>
+              <span>Massa da Bola ($m$):</span>
+              <span id="lblMass">0.20 kg</span>
+            </label>
+            <input type="range" id="inputMass" min="0.05" max="1.00" step="0.05" value="0.20" oninput="updateControls()">
+          </div>
+
+          <div class="control-group">
+            <label>Velocidade da Animação:</label>
+            <select id="selectSpeed">
+              <option value="0.5">0.5x (Lenta)</option>
+              <option value="1.0" selected>1.0x (Normal)</option>
+              <option value="1.5">1.5x (Rápida)</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btnStart" onclick="startSimulation()">▶ Iniciar</button>
+            <button class="btn btn-secondary" id="btnPause" onclick="togglePause()" disabled>⏸ Pausa</button>
+            <button class="btn btn-danger" onclick="resetSimulation()">🔄 Reiniciar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ℹ️ Dica de Análise</div>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Ao iniciar a simulação, as várias alturas máximas ($h_0, h_1, h_2, \dots$) serão registadas no plano do movimento. 
+            <strong>A tabela de dados, o gráfico e a reta de ajuste de regressão linear serão exibidos assim que o movimento terminar.</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Coluna da Direita: Canvas e Resultados Pós-Movimento -->
+      <div class="viewport-col">
+        
+        <div class="sim-viewport">
+          <canvas id="simCanvas" width="500" height="520"></canvas>
+          <div class="sim-status-bar" id="statusBar">
+            Pronto a iniciar. Clique em "Iniciar" para largar a bola.
+          </div>
+        </div>
+
+        <!-- Resultados Pós-Movimento -->
+        <div class="results-container" style="margin-top: 20px;">
+          
+          <!-- Tabela de Medições -->
+          <div class="card">
+            <div class="card-title">📊 Tabela de Dados Experimentais ($h_n$ em função de $h_{n-1}$)</div>
+            <div class="table-wrapper" id="tableContainer">
+              <div class="placeholder-msg" id="tablePlaceholder">
+                ⏳ A aguardar a conclusão do movimento da bola para preencher a tabela de dados...
+              </div>
+              <table id="dataTable" style="display: none;">
+                <thead>
+                  <tr>
+                    <th>Ressalto ($n$)</th>
+                    <th>$h_{n-1}$ [m]</th>
+                    <th>$h_n$ [m]</th>
+                    <th>Razão $\frac{h_n}{h_{n-1}}$</th>
+                    <th>$e_{\text{parcial}}$</th>
+                    <th>$\Delta E_m$ [J]</th>
+                    <th>% $E_m$ Retida</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Gráfico e Regressão Linear -->
+          <div class="card">
+            <div class="card-title">📈 Gráfico de $h_n$ em Função de $h_{n-1}$ e Reta de Ajuste</div>
+            
+            <div id="graphPlaceholder" class="placeholder-msg">
+              ⏳ O gráfico de dispersão e a reta de ajuste de regressão linear serão gerados automaticamente no final do movimento.
+            </div>
+
+            <div id="chartContainer" style="display: none;">
+              <div class="chart-box">
+                <canvas id="regressionChart"></canvas>
+              </div>
+
+              <!-- Caixas Resumo de Regressão Linear -->
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="value" id="valEquation">y = k·x</div>
+                  <div class="label">Equação da Reta</div>
+                </div>
+                <div class="stat-card">
+                  <div class="value" id="valSlope">0.000</div>
+                  <div class="label">Declive ($k = e^2$)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="value" id="valEexp">0.000</div>
+                  <div class="label">$e$ Experimental ($\sqrt{k}$)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="value" id="valR2">0.000</div>
+                  <div class="label">Coef. Determinação ($R^2$)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="value" id="valEnergyRetained">0.0%</div>
+                  <div class="label">% Energia Conservada / Ressalto</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TAB 2: FUNDAMENTAÇÃO TEÓRICA DETALHADA -->
+  <main id="tab-teoria" class="tab-content">
+    <div class="theory-section">
+      
+      <div class="theory-card">
+        <h2>1. Descrição Geral do Sistema Físico</h2>
+        <p>
+          O estudo do movimento de queda livre e ressaltos sucessivos de uma bola constitui um ensaio experimental clássico da mecânica para analisar a conversão e dissipação de energia mecânica durante colisões inelásticas com uma superfície rígida e estacionária.
+        </p>
+        <p>
+          Quando uma bola é abandonada de uma altura inicial $h_0$ a partir do repouso ($v_0 = 0\text{ m/s}$), é acelerada exclusivamente pela força gravítica sob a ação da aceleração da gravidade $g$. Ao atingir o solo, a bola sofre uma colisão inelástica na qual parte da sua energia mecânica é irreversivelmente dissipada sob a forma de deformação plástica/viscoelástica, energia térmica e ondas acústicas (som do impacto).
+        </p>
+      </div>
+
+      <div class="theory-card">
+        <h2>2. Cinemática e Conservação da Energia na Descida e Subida</h2>
+        <p>
+          Desprezando a resistência do ar durante o trajeto aéreo, a energia mecânica do sistema esfera-Terra conserva-se ao longo da queda e ao longo da subida de cada ressalto.
+        </p>
+        
+        <h3>Velocidade de Impacto ($v_{\text{impacto}}$):</h3>
+        <p>
+          Igualando a energia potencial gravítica na altura $h_{n-1}$ à energia cinética no instante imediatamente anterior ao impacto com o solo:
+        </p>
+        <div class="formula-box">
+          \(E_{p, n-1} = E_{c, \text{impacto}} \implies m \cdot g \cdot h_{n-1} = \frac{1}{2} m \cdot v_{\text{impacto}}^2 \implies v_{\text{impacto}} = \sqrt{2 g h_{n-1}}\)
+        </div>
+
+        <h3>Velocidade de Rebound/Ressalto ($v_{\text{ressalto}}$):</h3>
+        <p>
+          Analogamente, a velocidade imediatamente após o ressalto determina a altura máxima $h_n$ atingida no ressalto subsequente:
+        </p>
+        <div class="formula-box">
+          \(E_{c, \text{ressalto}} = E_{p, n} \implies \frac{1}{2} m \cdot v_{\text{ressalto}}^2 = m \cdot g \cdot h_n \implies v_{\text{ressalto}} = \sqrt{2 g h_n}\)
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <h2>3. Definição e Dedução do Coeficiente de Restituição ($e$)</h2>
+        <p>
+          O <strong>Coeficiente de Restituição</strong> de Newton ($e$) é uma grandeza adimensional que quantifica a elasticidade de uma colisão. Define-se como a razão entre o módulo da velocidade relativa de afastamento e o módulo da velocidade relativa de aproximação dos corpos em colisão.
+        </p>
+        <p>
+          Para uma superfície plana, rígida e de massa infinitamente grande (como o solo):
+        </p>
+        <div class="formula-box">
+          \(e = \frac{|v_{\text{afastamento}}|}{|v_{\text{aproximação}}|} = \frac{v_{\text{ressalto}}}{v_{\text{impacto}}} = \frac{\sqrt{2 g h_n}}{\sqrt{2 g h_{n-1}}} = \sqrt{\frac{h_n}{h_{n-1}}}\)
+        </div>
+        <p>
+          Elevando ambos os membros ao quadrado, estabelece-se a relação fundamental entre as alturas sucessivas:
+        </p>
+        <div class="formula-box">
+          \(e^2 = \frac{h_n}{h_{n-1}} \iff h_n = e^2 \cdot h_{n-1}\)
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <h2>4. Modelo de Regressão Linear e Significado Físico do Declive</h2>
+        <p>
+          A relação matemática entre a altura de ressalto $h_n$ (variável dependente, ordenada) e a altura de queda/anterior $h_{n-1}$ (variável independente, abscissa) é uma função linear direta da forma:
+        </p>
+        <div class="formula-box">
+          \(h_n = k \cdot h_{n-1} + b\)
+        </div>
+        <p>
+          Comparando com o modelo físico $h_n = e^2 \cdot h_{n-1}$:
+        </p>
+        <ul>
+          <li><strong>Declive ($k$):</strong> O declive da reta de ajuste é igual ao quadrado do coeficiente de restituição, $k = e^2$.</li>
+          <li><strong>Ordenada na Origem ($b$):</strong> Teoricamente nula ($b = 0$), uma vez que se a altura de queda for zero, a altura de ressalto também será nula.</li>
+        </ul>
+
+        <h3>Significado Físico da Fração de Energia Conservada:</h3>
+        <p>
+          A razão entre a energia mecânica mantida após o ressalto ($E_{m,n}$) e a energia mecânica antes do impacto ($E_{m,n-1}$) é dada por:
+        </p>
+        <div class="formula-box">
+          \(\frac{E_{m,n}}{E_{m,n-1}} = \frac{m g h_n}{m g h_{n-1}} = \frac{h_n}{h_{n-1}} = k = e^2\)
+        </div>
+        <p>
+          Isto significa que <strong>o declive $k$ da reta de ajuste representa diretamente a fração de energia mecânica que é mantida no sistema em cada ressalto!</strong> 
+          Consequentemente, a fração de energia mecânica dissipada sob a forma de calor e deformação é dada por $1 - k = 1 - e^2$.
+        </p>
+      </div>
+
+      <div class="theory-card">
+        <h2>5. Progressão Geométrica e Tempo Total do Movimento</h2>
+        <p>
+          As alturas máximas atingidas formam uma progressão geométrica de razão $q = e^2$:
+        </p>
+        <div class="formula-box">
+          \(h_n = h_0 \cdot (e^2)^n = h_0 \cdot e^{2n}\)
+        </div>
+        <p>
+          O tempo total decorrido $t_{\text{total}}$ desde que a bola é abandonada até parar completamente (considerando uma série infinita de ressaltos para $e < 1$) é obtido somando o tempo de queda inicial ao tempo de subida e descida de cada ressalto:
+        </p>
+        <div class="formula-box">
+          \(t_{\text{total}} = \sqrt{\frac{2 h_0}{g}} + \sum_{n=1}^{\infty} 2 \sqrt{\frac{2 h_n}{g}} = \sqrt{\frac{2 h_0}{g}} \left( 1 + 2 \sum_{n=1}^{\infty} e^n \right) = \sqrt{\frac{2 h_0}{g}} \left( \frac{1 + e}{1 - e} \right)\)
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <h2>6. Tratamento Estatístico: Método dos Mínimos Quadrados</h2>
+        <p>
+          Para obter os parâmetros da reta de ajuste $y = k x + b$ a partir de $N$ pares de dados experimentais $(x_i, y_i) = (h_{i-1}, h_i)$:
+        </p>
+        <div class="formula-box">
+          \(k = \frac{N \sum (x_i y_i) - \sum x_i \sum y_i}{N \sum x_i^2 - (\sum x_i)^2}, \quad
+          b = \frac{\sum y_i - k \sum x_i}{N}\)
+        </div>
+        <p>
+          O coeficiente de determinação $R^2$ avalia a qualidade do ajuste linear aos dados (variando entre 0 e 1):
+        </p>
+        <div class="formula-box">
+          \(R^2 = \frac{\left[ N \sum (x_i y_i) - \sum x_i \sum y_i \right]^2}{\left[ N \sum x_i^2 - (\sum x_i)^2 \right] \left[ N \sum y_i^2 - (\sum y_i)^2 \right]}\)
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TAB 3: RELATÓRIO LABORATORIAL INTERATIVO -->
+  <main id="tab-relatorio" class="tab-content">
+    <div class="lab-form">
+      <div class="card">
+        <div class="card-title">📝 Relatório de Atividade Laboratorial: Queda Livre e Ressalto</div>
+        
+        <div class="form-row">
+          <div class="form-field">
+            <label>Nome do Aluno:</label>
+            <input type="text" id="reportName" placeholder="Inserir nome completo">
+          </div>
+          <div class="form-field">
+            <label>Turma / Ano:</label>
+            <input type="text" id="reportClass" placeholder="Ex: 10.º A">
+          </div>
+          <div class="form-field">
+            <label>Data de Realização:</label>
+            <input type="date" id="reportDate">
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>1. Objetivos da Atividade Laboratorial:</label>
+          <textarea id="repObj">Gerais: Investigar a relação entre a altura de ressalto (h_n) e a altura de queda (h_n-1) para sucessivos ressaltos de uma bola. Determinar o coeficiente de restituição (e) do par de materiais e calcular a percentagem de energia mecânica conservada e dissipada em cada colisão.</textarea>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>2. Material e Equipamento Utilizado:</label>
+          <textarea id="repMat">- Simulador interativo EUFISICA simulations;
+- Bola de massa m e material selecionado;
+- Escala graduada/fita métrica virtual (em metros);
+- Módulo de registo e análise estatística por regressão linear.</textarea>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>3. Registo de Dados Experimentais:</label>
+          <button class="btn btn-secondary" style="margin-bottom: 10px; width: auto;" onclick="importSimDataToReport()">📊 Importar Dados da Simulação Atual</button>
+          <textarea id="repData" placeholder="Clique no botão acima para importar automaticamente a tabela e o ajuste estatístico..." style="min-height: 120px; font-family: monospace;"></textarea>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>4. Questões de Análise e Interpretação de Resultados:</label>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">
+            <strong>Q1:</strong> Qual o significado físico do declive $k$ obtido na regressão linear de $h_n$ em função de $h_{n-1}$?<br>
+            <strong>Q2:</strong> Como se calcula o coeficiente de restituição $e$ a partir da reta de ajuste?<br>
+            <strong>Q3:</strong> Se a bola for abandonada de uma altura dupla, o coeficiente de restituição altera-se teoricamente? Justifique.
+          </p>
+          <textarea id="repAnswers" placeholder="Escreva aqui as respostas às questões de análise..."></textarea>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label>5. Conclusões e Análise de Fontes de Erro:</label>
+          <textarea id="repConclusion" placeholder="Apresente as conclusões tiradas do ensaio, comparando o valor experimental de e com o valor teórico e discutindo possíveis fontes de incerteza..."></textarea>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+          <button class="btn btn-secondary" onclick="clearReportForm()">🧹 Limpar Formulário</button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>EUFISICA simulations — Elaborado por <strong>José Gonçalves</strong> | Simulação Interativa de Física para Ensino e Aprendizagem</p>
+  </footer>
+
+  <!-- LÓGICA JAVASCRIPT DA SIMULAÇÃO E CÁLCULOS -->
+  <script>
+    // System Parameters & State
+    let h0 = 2.50;
+    let e_teor = 0.90;
+    let g_acc = 9.81;
+    let ballMass = 0.20;
+    let simSpeed = 1.0;
+
+    // Simulation Physics Variables
+    let isRunning = false;
+    let isPaused = false;
+    let animFrameId = null;
+
+    let yPos = 2.50;        // Current height (m)
+    let yVel = 0.0;         // Velocity (m/s)
+    let currentState = 'IDLE'; // IDLE, FALLING, RISING, IMPACT, STOPPED
+    let bounceIndex = 0;
+    let lastTime = 0;
+    let impactCounter = 0;
+
+    // Measured Data Arrays
+    let peaks = [2.50];     // Array storing [h0, h1, h2, ...]
+    let peakMarkers = [];   // Canvas visual marker objects
+
+    // Canvas DOM & Context
+    let canvas, ctx;
+    let chartInstance = null;
+
+    // Material Presets
+    const materialPresets = {
+      basketball: { e: 0.82, mass: 0.60, name: "Bola de Basquetebol", color: "#ea580c" },
+      tennis: { e: 0.75, mass: 0.06, name: "Bola de Ténis", color: "#84cc16" },
+      superball: { e: 0.90, mass: 0.15, name: "Bola de Borracha Super", color: "#ec4899" },
+      steel: { e: 0.55, mass: 0.45, name: "Bola de Aço", color: "#64748b" }
+    };
+
+    // Color palette for peak markers
+    const markerColors = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#0284c7', '#dc2626', '#0d9488', '#84cc16'];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      canvas = document.getElementById('simCanvas');
+      ctx = canvas.getContext('2d');
+      
+      // Default date for report
+      document.getElementById('reportDate').valueAsDate = new Date();
+
+      updateControls();
+      resetSimulation();
+    });
+
+    // Alternar entre separadores (Tabs)
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabId === 'simulacao') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-simulacao').classList.add('active');
+      } else if (tabId === 'teoria') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-teoria').classList.add('active');
+      } else if (tabId === 'relatorio') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('tab-relatorio').classList.add('active');
+      }
+    }
+
+    // Aplicação dos presets de materiais
+    function applyMaterialPreset() {
+      const presetKey = document.getElementById('presetMaterial').value;
+      if (presetKey !== 'custom' && materialPresets[presetKey]) {
+        const mat = materialPresets[presetKey];
+        document.getElementById('inputE').value = mat.e;
+        document.getElementById('inputMass').value = mat.mass;
+        updateControls();
+      }
+    }
+
+    // Atualização dos controlos
+    function updateControls() {
+      h0 = parseFloat(document.getElementById('inputH0').value);
+      e_teor = parseFloat(document.getElementById('inputE').value);
+      g_acc = parseFloat(document.getElementById('selectG').value);
+      ballMass = parseFloat(document.getElementById('inputMass').value);
+
+      document.getElementById('lblH0').innerText = h0.toFixed(2) + ' m';
+      document.getElementById('lblE').innerText = e_teor.toFixed(2);
+      document.getElementById('lblMass').innerText = ballMass.toFixed(2) + ' kg';
+
+      if (!isRunning) {
+        yPos = h0;
+        peaks = [h0];
+        peakMarkers = [{ n: 0, height: h0, color: markerColors[0] }];
+        drawCanvas();
+      }
+    }
+
+    // Iniciar Simulação
+    function startSimulation() {
+      if (isRunning) return;
+
+      isRunning = true;
+      isPaused = false;
+      currentState = 'FALLING';
+      yPos = h0;
+      yVel = 0.0;
+      bounceIndex = 0;
+      peaks = [h0];
+      peakMarkers = [{ n: 0, height: h0, color: markerColors[0] }];
+
+      document.getElementById('btnStart').disabled = true;
+      document.getElementById('btnPause').disabled = false;
+      
+      const statusBar = document.getElementById('statusBar');
+      statusBar.className = 'sim-status-bar';
+      statusBar.innerText = '⚡ Em movimento... A medir ressaltos sucessivos.';
+
+      // Garantir que a tabela e gráfico mostram estado de espera durante a simulação
+      document.getElementById('tablePlaceholder').style.display = 'block';
+      document.getElementById('dataTable').style.display = 'none';
+      document.getElementById('graphPlaceholder').style.display = 'block';
+      document.getElementById('chartContainer').style.display = 'none';
+
+      lastTime = performance.now();
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // Pausar / Continuar
+    function togglePause() {
+      if (!isRunning) return;
+      isPaused = !isPaused;
+      const btnPause = document.getElementById('btnPause');
+      btnPause.innerText = isPaused ? '▶ Continuar' : '⏸ Pausa';
+      if (!isPaused) {
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // Reiniciar Simulação
+    function resetSimulation() {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      isRunning = false;
+      isPaused = false;
+      currentState = 'IDLE';
+
+      document.getElementById('btnStart').disabled = false;
+      const btnPause = document.getElementById('btnPause');
+      btnPause.disabled = true;
+      btnPause.innerText = '⏸ Pausa';
+
+      const statusBar = document.getElementById('statusBar');
+      statusBar.className = 'sim-status-bar';
+      statusBar.innerText = 'Pronto a iniciar. Clique em "Iniciar" para largar a bola.';
+
+      yPos = h0;
+      yVel = 0.0;
+      bounceIndex = 0;
+      peaks = [h0];
+      peakMarkers = [{ n: 0, height: h0, color: markerColors[0] }];
+
+      // Ocultar resultados pós-movimento
+      document.getElementById('tablePlaceholder').style.display = 'block';
+      document.getElementById('dataTable').style.display = 'none';
+      document.getElementById('graphPlaceholder').style.display = 'block';
+      document.getElementById('chartContainer').style.display = 'none';
+
+      drawCanvas();
+    }
+
+    // Loop de Animação Principal
+    function gameLoop(timestamp) {
+      if (!isRunning) return;
+
+      let dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      if (dt > 0.05) dt = 0.05; // Evitar saltos de framerate
+      const speedMult = parseFloat(document.getElementById('selectSpeed').value);
+      dt *= speedMult;
+
+      if (!isPaused) {
+        updatePhysics(dt);
+      }
+
+      drawCanvas();
+
+      if (currentState !== 'STOPPED') {
+        animFrameId = requestAnimationFrame(gameLoop);
+      } else {
+        isRunning = false;
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnPause').disabled = true;
+        onMotionComplete();
+      }
+    }
+
+    // Atualização da Física de Queda e Ressalto
+    function updatePhysics(dt) {
+      if (currentState === 'IMPACT') {
+        impactCounter++;
+        if (impactCounter >= 3) { // 3 frames de deformação no solo
+          let prevPeak = peaks[peaks.length - 1];
+          let vRebound = e_teor * Math.sqrt(2 * g_acc * prevPeak);
+          yVel = vRebound;
+          currentState = 'RISING';
+          impactCounter = 0;
+        }
+        return;
+      }
+
+      if (currentState === 'FALLING') {
+        yVel -= g_acc * dt;
+        yPos += yVel * dt;
+
+        if (yPos <= 0) {
+          yPos = 0;
+          currentState = 'IMPACT';
+          impactCounter = 0;
+        }
+      } else if (currentState === 'RISING') {
+        yVel -= g_acc * dt;
+        yPos += yVel * dt;
+
+        // Atingiu o ponto mais alto do ressalto (pico)
+        if (yVel <= 0) {
+          bounceIndex++;
+          let currentPeak = Math.max(0, yPos);
+          peaks.push(currentPeak);
+
+          // Registar marcador visual
+          let color = markerColors[bounceIndex % markerColors.length];
+          peakMarkers.push({
+            n: bounceIndex,
+            height: currentPeak,
+            color: color
+          });
+
+          // Condição de paragem (altura menor que 4 cm ou 8 ressaltos)
+          if (currentPeak < 0.04 || bounceIndex >= 7) {
+            yPos = 0;
+            yVel = 0;
+            currentState = 'STOPPED';
+          } else {
+            currentState = 'FALLING';
+          }
+        }
+      }
+    }
+
+    // Desenhar no Canvas da Simulação
+    function drawCanvas() {
+      const width = canvas.width;
+      const height = canvas.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Parâmetros de escala do mundo
+      const groundY = height - 50; // Posição do solo em píxeis
+      const rulerX = 55;          // Posição x da fita métrica
+      const maxVisH = Math.max(h0 * 1.15, 3.0);
+      const scale = (groundY - 40) / maxVisH; // píxeis por metro
+
+      // 1. Desenhar Fundo e Regra de Altura (Escala)
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(rulerX, 30);
+      ctx.lineTo(rulerX, groundY);
+      ctx.stroke();
+
+      // Marcas de metro na régua
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'right';
+
+      for (let h = 0; h <= maxVisH; h += 0.5) {
+        let py = groundY - h * scale;
+        if (py >= 30) {
+          ctx.beginPath();
+          ctx.moveTo(rulerX - 5, py);
+          ctx.lineTo(rulerX + 5, py);
+          ctx.stroke();
+          ctx.fillText(h.toFixed(1) + 'm', rulerX - 8, py + 4);
+        }
+      }
+
+      // 2. Desenhar Solo
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, groundY, width, height - groundY);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      ctx.lineTo(width, groundY);
+      ctx.stroke();
+
+      // Textura do solo
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 15) {
+        ctx.beginPath();
+        ctx.moveTo(x, groundY);
+        ctx.lineTo(x - 10, groundY + 12);
+        ctx.stroke();
+      }
+
+      // 3. Desenhar Guias Horizontais das Alturas Máximas ($h_0, h_1, h_2 \dots$)
+      peakMarkers.forEach((mk) => {
+        let mkY = groundY - mk.height * scale;
+
+        // Linha Tracejada
+        ctx.save();
+        ctx.strokeStyle = mk.color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rulerX, mkY);
+        ctx.lineTo(width - 110, mkY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Ponto no eixo
+        ctx.fillStyle = mk.color;
+        ctx.beginPath();
+        ctx.arc(rulerX, mkY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Etiqueta Flutuante
+        let labelText = `h${mk.n} = ${mk.height.toFixed(2)} m`;
+        ctx.fillStyle = mk.color;
+        ctx.beginPath();
+        ctx.roundRect(width - 105, mkY - 11, 95, 22, 6);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labelText, width - 57, mkY + 4);
+      });
+
+      // 4. Desenhar a Bola
+      const ballCenterX = 220;
+      let ballRadius = 16;
+      let ballCanvasY = groundY - yPos * scale - ballRadius;
+
+      // Efeito de deformação no impacto
+      let scaleX = 1;
+      let scaleY = 1;
+      if (currentState === 'IMPACT') {
+        scaleX = 1.35;
+        scaleY = 0.65;
+        ballCanvasY = groundY - (ballRadius * scaleY);
+      }
+
+      ctx.save();
+      ctx.translate(ballCenterX, ballCanvasY);
+      ctx.scale(scaleX, scaleY);
+
+      // Sombra
+      if (yPos > 0) {
+        let shadowWidth = ballRadius * (1 - Math.min(yPos / 3, 0.7));
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.beginPath();
+        ctx.ellipse(0, (groundY - ballCanvasY) / scaleY, shadowWidth, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Gradiente da Bola
+      let matKey = document.getElementById('presetMaterial').value;
+      let ballColor = (materialPresets[matKey] && materialPresets[matKey].color) || '#2563eb';
+
+      let grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, ballRadius);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, ballColor);
+      grad.addColorStop(1, '#0f172a');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, ballRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.stroke();
+
+      ctx.restore();
+
+      // 5. Telemetria em Tempo Real (Canto Superior)
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(width - 170, 10, 160, 65);
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.strokeRect(width - 170, 10, 160, 65);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Altura (y): ${yPos.toFixed(2)} m`, width - 160, 28);
+      ctx.fillText(`Velocidade (v): ${Math.abs(yVel).toFixed(2)} m/s`, width - 160, 45);
+      ctx.fillText(`N.º Ressaltos: ${bounceIndex}`, width - 160, 62);
+    }
+
+    // Executado Quando o Movimento é Concluído
+    function onMotionComplete() {
+      const statusBar = document.getElementById('statusBar');
+      statusBar.className = 'sim-status-bar completed';
+      statusBar.innerText = '✅ Movimento concluído! Tabela e gráfico de regressão linear gerados abaixo.';
+
+      // Preencher a tabela de dados
+      populateTable();
+
+      // Calcular regressão linear e desenhar o gráfico
+      computeAndDrawRegression();
+    }
+
+    // Preenchimento da Tabela de Medições
+    function populateTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      for (let i = 1; i < peaks.length; i++) {
+        let h_prev = peaks[i - 1];
+        let h_curr = peaks[i];
+        let ratio = h_curr / h_prev;
+        let e_parcial = Math.sqrt(ratio);
+        let deltaE = ballMass * g_acc * (h_curr - h_prev); // Negativo
+        let retPct = ratio * 100;
+
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${i}</strong></td>
+          <td>${h_prev.toFixed(3)}</td>
+          <td>${h_curr.toFixed(3)}</td>
+          <td>${ratio.toFixed(3)}</td>
+          <td><span style="color:var(--primary); font-weight:bold;">${e_parcial.toFixed(3)}</span></td>
+          <td style="color:var(--danger);">${deltaE.toFixed(3)} J</td>
+          <td><span style="color:var(--accent); font-weight:bold;">${retPct.toFixed(1)}%</span></td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById('tablePlaceholder').style.display = 'none';
+      document.getElementById('dataTable').style.display = 'table';
+    }
+
+    // Cálculo da Regressão Linear por Mínimos Quadrados e Gráfico
+    function computeAndDrawRegression() {
+      let xVals = []; // h_{n-1}
+      let yVals = []; // h_n
+
+      for (let i = 1; i < peaks.length; i++) {
+        xVals.push(peaks[i - 1]);
+        yVals.push(peaks[i]);
+      }
+
+      const N = xVals.length;
+      if (N < 2) return;
+
+      let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+      for (let i = 0; i < N; i++) {
+        sumX += xVals[i];
+        sumY += yVals[i];
+        sumXY += xVals[i] * yVals[i];
+        sumX2 += xVals[i] * xVals[i];
+        sumY2 += yVals[i] * yVals[i];
+      }
+
+      // Declive k e Intercepto b (y = k*x + b)
+      let k = (N * sumXY - sumX * sumY) / (N * sumX2 - sumX * sumX);
+      let b = (sumY - k * sumX) / N;
+
+      // Coeficiente de Determinação R^2
+      let numR = (N * sumXY - sumX * sumY);
+      let denR = Math.sqrt((N * sumX2 - sumX * sumX) * (N * sumY2 - sumY * sumY));
+      let r2 = denR !== 0 ? Math.pow(numR / denR, 2) : 1;
+
+      // Coeficiente de restituição experimental e % energia
+      let e_exp = Math.sqrt(Math.max(0, k));
+      let energyRetainedPct = k * 100;
+
+      // Atualizar Cartões de Estatística
+      document.getElementById('valEquation').innerText = `hₙ = ${k.toFixed(3)}·hₙ₋₁ ${b >= 0 ? '+' : ''}${b.toFixed(3)}`;
+      document.getElementById('valSlope').innerText = k.toFixed(3);
+      document.getElementById('valEexp').innerText = e_exp.toFixed(3);
+      document.getElementById('valR2').innerText = r2.toFixed(4);
+      document.getElementById('valEnergyRetained').innerText = energyRetainedPct.toFixed(1) + '%';
+
+      // Exibir Contentores
+      document.getElementById('graphPlaceholder').style.display = 'none';
+      document.getElementById('chartContainer').style.display = 'block';
+
+      // Renderizar Gráfico com Chart.js
+      renderChart(xVals, yVals, k, b, h0);
+    }
+
+    // Desenhar Gráfico Chart.js
+    function renderChart(xVals, yVals, k, b, maxH) {
+      const ctxChart = document.getElementById('regressionChart').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      // Pontos experimentais
+      let scatterPoints = xVals.map((x, idx) => ({ x: x, y: yVals[idx] }));
+
+      // Reta de ajuste
+      let fitLine = [
+        { x: 0, y: b },
+        { x: maxH, y: k * maxH + b }
+      ];
+
+      chartInstance = new Chart(ctxChart, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Medições Experimentais (hₙ vs hₙ₋₁)',
+              data: scatterPoints,
+              backgroundColor: '#2563eb',
+              borderColor: '#1d4ed8',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            },
+            {
+              label: `Reta de Ajuste: hₙ = ${k.toFixed(3)}·hₙ₋₁`,
+              data: fitLine,
+              type: 'line',
+              borderColor: '#dc2626',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return `hₙ₋₁ = ${ctx.parsed.x.toFixed(3)} m, hₙ = ${ctx.parsed.y.toFixed(3)} m`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              title: { display: true, text: 'Altura Anterior hₙ₋₁ (m)', font: { weight: 'bold' } },
+              min: 0
+            },
+            y: {
+              title: { display: true, text: 'Altura de Ressalto hₙ (m)', font: { weight: 'bold' } },
+              min: 0
+            }
+          }
+        }
+      });
+    }
+
+    // Importar Dados para o Relatório Laboratorial
+    function importSimDataToReport() {
+      if (peaks.length < 2) {
+        alert("Realize primeiro uma simulação completa para gerar os dados.");
+        return;
+      }
+
+      let text = `=== REGISTO DE DADOS DA SIMULAÇÃO ===\n`;
+      text += `Material: ${document.getElementById('presetMaterial').selectedOptions[0].text}\n`;
+      text += `Altura Inicial (h0): ${h0.toFixed(2)} m | Coef. Teórico (e): ${e_teor.toFixed(2)} | Gravidade (g): ${g_acc} m/s²\n\n`;
+      text += `Ressalto (n) | h_{n-1} [m] | h_n [m] | e_parcial | % E_m Retida\n`;
+      text += `-----------------------------------------------------------\n`;
+
+      for (let i = 1; i < peaks.length; i++) {
+        let h_prev = peaks[i - 1];
+        let h_curr = peaks[i];
+        let ratio = h_curr / h_prev;
+        let e_parcial = Math.sqrt(ratio);
+        text += `     ${i}       |   ${h_prev.toFixed(3)}   |  ${h_curr.toFixed(3)}  |   ${e_parcial.toFixed(3)}   |   ${(ratio*100).toFixed(1)}%\n`;
+      }
+
+      let k = parseFloat(document.getElementById('valSlope').innerText);
+      let e_exp = parseFloat(document.getElementById('valEexp').innerText);
+      let r2 = document.getElementById('valR2').innerText;
+
+      text += `\n=== AJUSTE ESTATÍSTICO (REGRESSÃO LINEAR) ===\n`;
+      text += `Equação: ${document.getElementById('valEquation').innerText}\n`;
+      text += `Declive (k = e²): ${k}\n`;
+      text += `Coeficiente de Restituição Exp. (e_exp = √k): ${e_exp}\n`;
+      text += `Coeficiente de Determinação (R²): ${r2}\n`;
+
+      document.getElementById('repData').value = text;
+      alert("Dados e ajuste de regressão linear importados com sucesso para o relatório!");
+    }
+
+    // Limpar Formulário do Relatório
+    function clearReportForm() {
+      if (confirm("Tem a certeza que deseja limpar o formulário do relatório?")) {
+        document.getElementById('reportName').value = '';
+        document.getElementById('reportClass').value = '';
+        document.getElementById('repData').value = '';
+        document.getElementById('repAnswers').value = '';
+        document.getElementById('repConclusion').value = '';
+      }
+    }
+  </script>
+</body>
+</html>
