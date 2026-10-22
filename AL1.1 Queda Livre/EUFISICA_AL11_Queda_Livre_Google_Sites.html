@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>EUFISICA | AL 1.1 — Queda livre</title>
+  <style>
+    :root{--ink:#19324b;--muted:#5d7288;--blue:#1663af;--blue2:#eaf3ff;--teal:#007c82;--line:#dce5ed;--bg:#f3f7fb;--paper:#fff;--orange:#ae5a00;--red:#b42318}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:15px;line-height:1.5}
+    .shell{max-width:1250px;margin:auto;padding:16px 16px 40px} .hero{background:linear-gradient(110deg,#123354,#1663a5);color:#fff;padding:22px 27px;border-radius:16px;box-shadow:0 9px 25px #18364d1c}
+    .hero .brand{font-weight:900;letter-spacing:.14em;font-size:13px;color:#cce6ff}.hero h1{font-size:clamp(21px,2.9vw,31px);line-height:1.15;margin:6px 0 7px}.hero p{margin:0;color:#d8eaf9}.hero .author{margin-top:9px;font-size:13px}
+    .notice{padding:11px 14px;background:#fff8e9;border-left:4px solid #d18c20;border-radius:8px;font-size:13px;margin:14px 0}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.8fr);gap:15px}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0;margin-top:15px;box-shadow:0 2px 8px #233b5110}
+    .panel h2{font-size:20px;margin:0 0 10px}.panel h3{font-size:16px;margin:13px 0 8px}.subtle{font-size:13px;color:var(--muted)}
+    .tag{display:inline-block;padding:3px 9px;background:#dcecff;color:#145695;border-radius:20px;font-size:12px;font-weight:700}
+    .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+    label{font-size:13px;font-weight:650} input,select,textarea{font:inherit;color:inherit;border:1px solid #bccbda;border-radius:8px;background:#fff;padding:9px 10px;max-width:100%}
+    input:focus,select:focus,textarea:focus{outline:3px solid #bfdef8;border-color:#1975b5} input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}
+    input[type=number]{width:100%} textarea{width:100%;min-height:86px;resize:vertical;line-height:1.5}.checkline{display:flex;align-items:center;gap:8px;margin:13px 0 8px}.checkline label{font-weight:500}
+    button{font:inherit;font-weight:700;cursor:pointer;border:1px solid #bbccd9;padding:9px 13px;border-radius:8px;background:#fff;color:#21405e;transition:background .15s}
+    button:hover{background:#eef4f9}button:focus-visible{outline:3px solid #8cbeed;outline-offset:2px}button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}button.primary:hover{background:#0c508e}button.teal{background:var(--teal);border-color:var(--teal);color:white}button.teal:hover{background:#006b70}button.danger{color:#a22818}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;margin:11px 0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:11px 0}.metric{border:1px solid var(--line);border-radius:9px;padding:10px;background:#f8fbff}.metric .number{font-size:clamp(16px,2.2vw,22px);font-weight:850;color:#135c9e}.metric .name{font-size:11px;color:var(--muted)}
+    canvas{display:block;width:100%;background:#fcfdff;border:1px solid #dbe5f0;border-radius:10px}.apparatus{height:385px}.chart{height:345px}
+    .table-wrap{max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:9px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}thead{background:#eaf3fc}th,td{padding:8px 10px;text-align:center;border-bottom:1px solid #e5edf3}th{font-weight:750}tbody tr:nth-child(even){background:#f9fbfd}td button{padding:3px 8px;font-size:12px}.empty{text-align:center;padding:20px;color:var(--muted)}
+    .formula{background:#f2f8fe;padding:12px 14px;border-radius:9px;overflow-x:auto;font-size:14px;margin:10px 0}.pill{display:inline-block;border-radius:9px;background:#e9f6f3;color:#03655b;padding:4px 9px;font-size:12px}
+    .status{min-height:22px;margin:7px 0;color:#166147;font-weight:650;font-size:13px}.status.error{color:var(--red)}
+    .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.report-field{margin:9px 0}.report-field label{display:block;margin-bottom:5px}
+    .summary{padding:12px;border:1px solid #cfe6f8;border-radius:9px;background:#f6fbff;margin-top:12px}.summary strong{color:#0b4d85}
+    .footer{font-size:12px;text-align:center;color:#607388;margin:18px 0}.smalllist{margin:8px 0;padding-left:21px;font-size:13px}.smalllist li{margin:4px 0}
+    @media(max-width:830px){.layout{grid-template-columns:1fr}.apparatus{height:335px}}
+    @media(max-width:540px){.shell{padding:8px}.panel{padding:13px}.hero{padding:18px}.field-grid,.report-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}.metric{padding:7px}.chart{height:280px}}
+    @media print{body{background:white}.shell{max-width:none}.hero{box-shadow:none}button,.actions,.notice{display:none!important}.panel{break-inside:avoid;box-shadow:none}textarea{min-height:50px}}
+  </style>
+</head>
+<body>
+<div class="shell" id="app">
+  <header class="hero">
+    <div class="brand">EUFISICA SIMULATIONS</div>
+    <h1>AL 1.1 · Queda livre: força gravítica e aceleração da gravidade</h1>
+    <p>Laboratório virtual · Física e Química A · 11.º ano</p>
+    <p class="author">Prof. José Gonçalves</p>
+  </header>
+  <div class="notice"><strong>Como utilizar:</strong> configure a experiência, clique em <strong>Medir e registar</strong> várias vezes com massas diferentes, analise os gráficos, preencha o relatório e selecione <strong>Guardar relatório em PDF</strong>. O PDF é criado no próprio navegador, sem usar a impressão do iframe.</div>
+
+  <section class="layout" aria-label="Experiência e configuração">
+    <div class="panel">
+      <h2>1. Experiência virtual <span class="tag">Duas células fotoelétricas</span></h2>
+      <canvas class="apparatus" id="scene" aria-label="Representação animada da queda vertical de uma esfera entre duas células fotoelétricas"></canvas>
+      <div class="actions">
+        <button id="play" class="primary" type="button">▶ Iniciar queda</button>
+        <button id="resetAnimation" type="button">↺ Repor animação</button>
+        <button id="measure" class="teal" type="button">● Medir e registar</button>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div id="liveT" class="number">0,000 s</div><div class="name">Instante</div></div>
+        <div class="metric"><div id="liveV" class="number">0,00 m/s</div><div class="name">Velocidade (↓)</div></div>
+        <div class="metric"><div id="liveY" class="number">0,000 m</div><div class="name">Deslocamento (↓)</div></div>
+      </div>
+      <div class="subtle">O desenho é esquemático. Referencial vertical orientado para baixo. A esfera é abandonada sem velocidade inicial. As células medem a duração da interrupção do feixe.</div>
+    </div>
+
+    <div class="panel">
+      <h2>2. Configuração experimental</h2>
+      <div class="field-grid">
+        <div class="field"><label for="mass">Massa da esfera (g)</label><input id="mass" type="number" min="5" max="300" step="5" value="50"></div>
+        <div class="field"><label for="diameter">Diâmetro da esfera, L (cm)</label><input id="diameter" type="number" min="1" max="6" step="0.5" value="3"></div>
+        <div class="field"><label for="gate1">Posição da célula 1 (m)</label><input id="gate1" type="number" min="0.1" max="1.4" step="0.05" value="0.40"></div>
+        <div class="field"><label for="gate2">Posição da célula 2 (m)</label><input id="gate2" type="number" min="0.3" max="1.65" step="0.05" value="1.10"></div>
+        <div class="field"><label for="resolution">Resolução temporal</label><select id="resolution"><option value="0">Ideal (sem arredondamento)</option><option value="0.0001" selected>0,1 ms</option><option value="0.0005">0,5 ms</option><option value="0.001">1,0 ms</option></select></div>
+        <div class="field"><label for="gref">Valor de referência (m/s²)</label><input id="gref" type="number" step="0.01" min="1" max="20" value="9.81"></div>
+      </div>
+      <div class="checkline"><input type="checkbox" id="air"><label for="air"><strong>Extensão:</strong> considerar resistência do ar (modelo quadrático)</label></div>
+      <p class="subtle">Comprimento de bloqueio do feixe: <strong>L = diâmetro da esfera</strong>. Modelo do ar: densidade 1,20 kg/m³; coeficiente de arrasto esférico 0,47. Sem resistência do ar, a aceleração deve ser independente da massa.</p>
+      <div class="formula"><strong>Tratamento experimental</strong><br>
+        v₁ = L / Δτ₁ &nbsp; · &nbsp; v₂ = L / Δτ₂<br>
+        t₁ = (t<sub>entrada,1</sub> + t<sub>saída,1</sub>)/2<br>
+        t₂ = (t<sub>entrada,2</sub> + t<sub>saída,2</sub>)/2<br>
+        a<sub>m</sub> = (v₂ − v₁)/(t₂ − t₁)<br>
+        Erro (%) = |a<sub>m</sub> − g<sub>ref</sub>|/g<sub>ref</sub> × 100
+      </div>
+      <div id="message" role="status" aria-live="polite" class="status"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3. Recolha e tratamento de dados</h2>
+    <p class="subtle">Em cada lançamento são registados os instantes de entrada e saída do feixe em ambas as células. As velocidades correspondem aos instantes médios de interrupção.</p>
+    <div class="table-wrap">
+      <table id="measureTable"><thead><tr>
+        <th>Ensaio</th><th>m (g)</th><th>L (cm)</th><th>Δτ₁ (ms)</th><th>Δτ₂ (ms)</th><th>t₁ (s)</th><th>t₂ (s)</th><th>v₁ (m/s)</th><th>v₂ (m/s)</th><th>a (m/s²)</th><th>Erro (%)</th><th>Excluir</th>
+      </tr></thead><tbody id="measureRows"><tr><td class="empty" colspan="12">Ainda não foram realizadas medições.</td></tr></tbody></table>
+    </div>
+    <div class="actions">
+      <button id="csv" type="button">↓ Exportar dados CSV</button>
+      <button id="exportProject" type="button">↓ Guardar projeto JSON</button>
+      <button id="importProject" type="button">↑ Abrir projeto JSON</button>
+      <input id="fileInput" type="file" accept="application/json,.json" hidden>
+      <button id="clearData" class="danger" type="button">Limpar medições</button>
+    </div>
+    <details>
+      <summary><strong>Adicionar dados medidos numa experiência real (opcional)</strong></summary>
+      <p class="subtle">Indique os quatro instantes registados pelo cronómetro (em segundos). A massa e o diâmetro usados são os da configuração acima.</p>
+      <div class="field-grid">
+        <div class="field"><label for="e1">Entrada célula 1 (s)</label><input id="e1" type="number" step="0.00001" min="0" placeholder="0,28000"></div>
+        <div class="field"><label for="s1">Saída célula 1 (s)</label><input id="s1" type="number" step="0.00001" min="0" placeholder="0,29000"></div>
+        <div class="field"><label for="e2">Entrada célula 2 (s)</label><input id="e2" type="number" step="0.00001" min="0" placeholder="0,47000"></div>
+        <div class="field"><label for="s2">Saída célula 2 (s)</label><input id="s2" type="number" step="0.00001" min="0" placeholder="0,47600"></div>
+      </div>
+      <div class="actions"><button id="addManual" type="button">Adicionar ensaio real</button></div>
+    </details>
+    <div id="statSummary" class="summary"><strong>Resumo:</strong> faça pelo menos uma medição para obter a aceleração média e o erro percentual.</div>
+  </section>
+
+  <section class="panel">
+    <h2>4. Análise gráfica</h2>
+    <div class="actions" role="group" aria-label="Selecionar o gráfico">
+      <button id="graphVT" class="primary" type="button">Gráfico velocidade–tempo</button>
+      <button id="graphAM" type="button">Gráfico aceleração–massa</button>
+    </div>
+    <canvas class="chart" id="plot" aria-label="Gráfico dos resultados experimentais"></canvas>
+    <div id="graphInfo" class="subtle">Registe ensaios para construir o gráfico.</div>
+    <div class="formula">No gráfico <strong>v(t)</strong>, o declive de um ajuste linear estima a aceleração quando esta é aproximadamente constante. No gráfico <strong>a(m)</strong>, verifique se a aceleração depende da massa; os desvios podem resultar de resolução temporal ou resistência do ar.</div>
+  </section>
+
+  <section class="panel" id="report">
+    <h2>5. Relatório experimental</h2>
+    <div class="report-grid">
+      <div class="field"><label for="student">Nome do(s) aluno(s)</label><input id="student" placeholder="Nomes dos elementos do grupo"></div>
+      <div class="field"><label for="schoolClass">Turma / grupo</label><input id="schoolClass" placeholder="11.º ... / Grupo ..."></div>
+      <div class="field"><label for="school">Escola</label><input id="school" placeholder="Nome da escola"></div>
+      <div class="field"><label for="experimentDate">Data</label><input id="experimentDate" type="date"></div>
+    </div>
+    <div class="report-field"><label for="question">Questão-problema e objetivos</label><textarea id="question" placeholder="Que valor da aceleração gravítica é obtido? A aceleração depende da massa do corpo?"></textarea></div>
+    <div class="report-field"><label for="hypothesis">Hipóteses / previsões fundamentadas</label><textarea id="hypothesis" placeholder="Apresenta as tuas previsões com base nas leis de Newton."></textarea></div>
+    <div class="report-field"><label for="procedure">Material e procedimento experimental</label><textarea id="procedure" placeholder="Descreve o material, as células fotoelétricas, as grandezas medidas e o procedimento adotado."></textarea></div>
+    <div class="report-field"><label for="analysis">Tratamento de dados e interpretação dos gráficos</label><textarea id="analysis" placeholder="Mostra um exemplo de cálculo, interpreta o declive de v(t) e compara as acelerações obtidas."></textarea></div>
+    <div class="report-field"><label for="limitations">Incertezas, erros e limitações</label><textarea id="limitations" placeholder="Discute a resolução temporal, o arredondamento, o alinhamento das células e a resistência do ar."></textarea></div>
+    <div class="report-field"><label for="conclusion">Conclusão</label><textarea id="conclusion" placeholder="Responde à questão-problema, indicando os resultados que sustentam a conclusão."></textarea></div>
+    <div class="report-field"><label for="improvements">Melhorias / investigações futuras</label><textarea id="improvements" placeholder="Propõe melhorias e novas experiências para testar o modelo."></textarea></div>
+    <h3>Exportar relatório completo</h3>
+    <p class="subtle">O PDF inclui identificação, enquadramento, medições, tabela de resultados, dois gráficos e o texto integral do relatório. A construção do PDF é feita localmente, sem bibliotecas ou ligações externas.</p>
+    <div class="actions">
+      <button id="downloadPdf" class="teal" type="button">↓ Guardar relatório em PDF</button>
+      <button id="openPdf" class="primary" type="button">▣ Abrir PDF / imprimir</button>
+      <button id="saveProject" type="button">Guardar trabalho</button>
+      <button id="resetAll" class="danger" type="button">Recomeçar tudo</button>
+    </div>
+    <div id="pdfMessage" class="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <footer class="footer">EUFISICA Simulations · Prof. José Gonçalves · Material didático para Física e Química A, 11.º ano<br>Modelo simulado: movimento vertical sob gravidade constante, com extensão opcional de arrasto quadrático.</footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const GROUND = 1.82, RHO = 1.20, CD = 0.47, STORAGE = 'eufisica_al11_queda_livre_v2';
+  const CONFIG = ['mass','diameter','gate1','gate2','resolution','gref','air'];
+  const REPORT = ['student','schoolClass','school','experimentDate','question','hypothesis','procedure','analysis','limitations','conclusion','improvements'];
+  let records = [], mode = 'vt', anim = {time:0,running:false,last:0};
+  const fmt = (x,n=3) => Number.isFinite(x) ? x.toFixed(n).replace('.',',') : '—';
+  const num = id => Number($(id).value);
+  const setMsg = (text, isError=false, target='message') => { $(target).textContent = text; $(target).className='status' + (isError?' error':''); };
+  const finite = x => Number.isFinite(x);
+  function settings(){
+    return {m:num('mass')/1000, L:num('diameter')/100, y1:num('gate1'), y2:num('gate2'), res:num('resolution'), g:num('gref'), air:$('air').checked};
+  }
+  function validate(s){
+    if(!Object.values([s.m,s.L,s.y1,s.y2,s.res,s.g]).every(finite)) throw Error('Preencha todas as grandezas com números válidos.');
+    if(s.m < .005 || s.m > .3 || s.L < .01 || s.L > .06) throw Error('A massa deve estar entre 5 e 300 g e o diâmetro entre 1 e 6 cm.');
+    if(s.y1 < .1 || s.y2 > 1.65 || s.y2 <= s.y1+s.L+.04 || s.y2+s.L >= GROUND) throw Error('Ajuste as posições das células: a segunda deve estar abaixo da primeira e ambas acima do chão.');
+    if(s.g < 1 || s.g > 20 || s.res < 0 || s.res > .001) throw Error('Verifique a aceleração de referência e a resolução temporal.');
+    return s;
+  }
+  function physics(s){
+    const k = s.air ? .5*RHO*CD*Math.PI*(s.L/2)**2 : 0;
+    const vt = k>0 ? Math.sqrt(s.m*s.g/k) : Infinity;
+    const factor = Number.isFinite(vt) ? vt*vt/s.g : 0;
+    function pos(t){
+      if(k===0) return .5*s.g*t*t;
+      const u = Math.min(s.g*t/vt,40);
+      return factor*Math.log(Math.cosh(u));
+    }
+    function velocity(t){return k===0 ? s.g*t : vt*Math.tanh(s.g*t/vt);}
+    function when(y){
+      if(k===0) return Math.sqrt(2*y/s.g);
+      let lo=0,hi=2;
+      while(pos(hi)<y && hi<100) hi*=2;
+      for(let i=0;i<70;i++){const mid=(lo+hi)/2;if(pos(mid)<y)lo=mid;else hi=mid;}
+      return (lo+hi)/2;
+    }
+    return {pos,velocity,when,vt};
+  }
+  function quantize(t,res){
+    if(!res) return t;
+    return Math.max(0, Math.round((t+(Math.random()-.5)*res)/res)*res);
+  }
+  function makeRecord(s, times, source){
+    const [e1,x1,e2,x2]=times;
+    if(![e1,x1,e2,x2].every(finite) || e1<0 || x1<=e1 || e2<=x1 || x2<=e2) throw Error('Os instantes devem estar por ordem: entrada 1, saída 1, entrada 2, saída 2.');
+    const d1=x1-e1,d2=x2-e2,t1=(e1+x1)/2,t2=(e2+x2)/2;
+    if(t2<=t1) throw Error('O intervalo entre as células deve ser positivo.');
+    const v1=s.L/d1,v2=s.L/d2,a=(v2-v1)/(t2-t1);
+    if(![v1,v2,a].every(finite) || Math.abs(a)>1000) throw Error('Os dados introduzidos são incompatíveis com a medição.');
+    return {id:Date.now()+Math.random(),m:s.m,L:s.L,y1:s.y1,y2:s.y2,g:s.g,air:s.air,res:s.res,source,e1,x1,e2,x2,d1,d2,t1,t2,v1,v2,a,error:100*Math.abs(a-s.g)/s.g};
+  }
+  function measure(){
+    try{
+      const s=validate(settings()),p=physics(s);
+      const t=[p.when(s.y1),p.when(s.y1+s.L),p.when(s.y2),p.when(s.y2+s.L)].map(x=>quantize(x,s.res));
+      records.push(makeRecord(s,t,'Simulação'));
+      save();refresh();startAnimation(true);setMsg('Medição registada. Altere a massa e repita a experiência.');
+    }catch(err){setMsg(err.message,true);}
+  }
+  function addManual(){
+    try{
+      const s=validate(settings()),values=['e1','s1','e2','s2'].map(id=>$(id).value.trim()===''?NaN:Number($(id).value));
+      records.push(makeRecord(s,values,'Experimental'));
+      save();refresh();setMsg('Ensaio experimental adicionado.');
+    }catch(err){setMsg(err.message,true);}
+  }
+  function mean(vals){return vals.reduce((a,b)=>a+b,0)/vals.length;}
+  function stats(){
+    if(!records.length)return null;
+    const aa=records.map(r=>r.a), avg=mean(aa),sd=aa.length>1?Math.sqrt(aa.reduce((s,a)=>s+(a-avg)**2,0)/(aa.length-1)):null;
+    const ref=records[records.length-1].g;
+    const points=records.flatMap(r=>[{x:r.t1,y:r.v1},{x:r.t2,y:r.v2}]);
+    const mx=mean(points.map(p=>p.x)),my=mean(points.map(p=>p.y));
+    const Sxx=points.reduce((a,p)=>a+(p.x-mx)**2,0);
+    const slope=Sxx>1e-15 ? points.reduce((a,p)=>a+(p.x-mx)*(p.y-my),0)/Sxx : NaN;
+    const intercept=my-slope*mx;
+    return {avg,sd,ref,error:100*Math.abs(avg-ref)/ref,slope,intercept,points};
+  }
+  function safeHTML(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function refresh(){
+    const body=$('measureRows');body.innerHTML=records.length?'': '<tr><td colspan="12" class="empty">Ainda não foram realizadas medições.</td></tr>';
+    records.forEach((r,i)=>{
+      const tr=document.createElement('tr');
+      [i+1,fmt(r.m*1000,0),fmt(r.L*100,1),fmt(r.d1*1000,2),fmt(r.d2*1000,2),fmt(r.t1,5),fmt(r.t2,5),fmt(r.v1,3),fmt(r.v2,3),fmt(r.a,3),fmt(r.error,2)].forEach((v,j)=>{const td=document.createElement('td');td.textContent=v;if(j===0)td.title=r.source;tr.appendChild(td);});
+      const td=document.createElement('td'),b=document.createElement('button');b.type='button';b.textContent='×';b.setAttribute('aria-label','Remover ensaio '+(i+1));b.addEventListener('click',()=>{records.splice(i,1);save();refresh();});td.appendChild(b);tr.appendChild(td);body.appendChild(tr);
+    });
+    const s=stats();
+    $('statSummary').innerHTML=s?'<strong>Ensaios:</strong> '+records.length+' &nbsp; | &nbsp; <strong>aceleração média:</strong> '+fmt(s.avg,3)+' m/s² &nbsp; | &nbsp; <strong>desvio padrão:</strong> '+(s.sd===null?'—':fmt(s.sd,3)+' m/s²')+' &nbsp; | &nbsp; <strong>erro relativo:</strong> '+fmt(s.error,2)+'%<br><span class="subtle">Estatísticas descritivas dos ensaios; comparação com g = '+fmt(s.ref,2)+' m/s² (referência do último ensaio).</span>':'<strong>Resumo:</strong> faça pelo menos uma medição para obter a aceleração média e o erro percentual.';
+    drawGraph();
+  }
+  function save(){
+    const data={version:2,config:Object.fromEntries(CONFIG.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value])),report:Object.fromEntries(REPORT.map(id=>[id,$(id).value])),records};
+    try{localStorage.setItem(STORAGE,JSON.stringify(data));}catch(_){} // Pode estar bloqueado dentro de um iframe.
+    return data;
+  }
+  function restore(data){
+    if(!data || typeof data!=='object' || !Array.isArray(data.records) || data.records.length>500) throw Error('Este ficheiro não é um projeto EUFISICA válido.');
+    CONFIG.forEach(id=>{if(data.config && data.config[id]!==undefined){if($(id).type==='checkbox')$(id).checked=Boolean(data.config[id]);else $(id).value=String(data.config[id]);}});
+    REPORT.forEach(id=>{if(data.report && typeof data.report[id]==='string')$(id).value=data.report[id].slice(0,25000);});
+    records=data.records.map(r=>{
+      const s={m:Number(r.m),L:Number(r.L),y1:Number(r.y1),y2:Number(r.y2),g:Number(r.g),res:Number(r.res),air:Boolean(r.air)};
+      validate(s);return makeRecord(s,[Number(r.e1),Number(r.x1),Number(r.e2),Number(r.x2)],r.source==='Experimental'?'Experimental':'Simulação');
+    });
+    anim={time:0,running:false,last:0};$('play').textContent='▶ Iniciar queda';save();refresh();drawScene();
+  }
+  function download(blob,filename){
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }
+  function fileName(ext){const n=$('student').value.trim().replace(/[^a-z0-9_-]/gi,'_').slice(0,35);return 'EUFISICA_AL11_Queda_Livre'+(n?'_'+n:'')+'.'+ext;}
+  function exportProject(){download(new Blob([JSON.stringify(save(),null,2)],{type:'application/json'}),fileName('json'));setMsg('Projeto exportado: guarde o ficheiro JSON para continuar noutra sessão.');}
+  function exportCSV(){
+    const cols=['Ensaio','Origem','Massa_g','Diametro_cm','Entrada1_s','Saida1_s','Entrada2_s','Saida2_s','Bloqueio1_ms','Bloqueio2_ms','Tempo1_s','Tempo2_s','v1_m_s','v2_m_s','a_m_s2','Erro_percentual','Arrasto'];
+    const lines=[cols.join(';')];
+    records.forEach((r,i)=>lines.push([i+1,r.source,r.m*1000,r.L*100,r.e1,r.x1,r.e2,r.x2,r.d1*1000,r.d2*1000,r.t1,r.t2,r.v1,r.v2,r.a,r.error,r.air?'Sim':'Não'].map(v=>typeof v==='number'?String(v).replace('.',','):String(v)).join(';')));
+    download(new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),fileName('csv'));setMsg('CSV exportado.');
+  }
+  function setupCanvas(canvas){
+    const rect=canvas.getBoundingClientRect(),w=Math.max(260,rect.width),h=Math.max(180,rect.height),dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return {ctx,w,h};
+  }
+  function drawScene(){
+    const {ctx:c,w,h}=setupCanvas($('scene'));c.clearRect(0,0,w,h);
+    const s=settings(), y1=Number.isFinite(s.y1)?s.y1:.4,y2=Number.isFinite(s.y2)?s.y2:1.1;
+    const top=37,bottom=h-36,scale=(bottom-top)/GROUND,railX=w*.40,beamEnd=Math.min(w-55,railX+85);
+    c.fillStyle='#eff6ff';c.fillRect(railX-50,top,100,bottom-top);
+    c.strokeStyle='#b4c6d9';c.lineWidth=2;c.beginPath();c.moveTo(railX-51,top);c.lineTo(railX-51,bottom);c.moveTo(railX+51,top);c.lineTo(railX+51,bottom);c.stroke();
+    c.font='12px system-ui';c.textAlign='right';c.fillStyle='#60758a';for(let y=0;y<=1.8;y+=.3){const yy=top+y*scale;c.strokeStyle='#e1eaf2';c.beginPath();c.moveTo(railX-48,yy);c.lineTo(railX+50,yy);c.stroke();c.fillText(y.toFixed(1).replace('.',',')+' m',railX-60,yy+4);}
+    [{y:y1,label:'Célula 1',color:'#1371bb'},{y:y2,label:'Célula 2',color:'#00847e'}].forEach(g=>{
+      const yy=top+g.y*scale;c.fillStyle=g.color;c.fillRect(railX-58,yy-6,17,12);c.fillRect(railX+43,yy-6,17,12);c.strokeStyle=g.color;c.setLineDash([4,3]);c.lineWidth=2;c.beginPath();c.moveTo(railX-40,yy);c.lineTo(railX+43,yy);c.stroke();c.setLineDash([]);c.fillStyle=g.color;c.font='bold 13px system-ui';c.textAlign='left';c.fillText(g.label,railX+70,yy+4);
+    });
+    c.fillStyle='#a7adb4';c.fillRect(railX-90,bottom,180,8);c.fillStyle='#273d53';c.font='bold 12px system-ui';c.textAlign='left';c.fillText('Sentido positivo ↓',Math.min(w-162,railX+70),top+10);
+    let pos=0,v=0;try{const p=physics(s);pos=Math.min(GROUND,p.pos(anim.time));v=p.velocity(anim.time);}catch(_){}
+    const radius=Math.max(6,Math.min(19,s.L*scale/2));const cy=Math.min(bottom-radius,top+pos*scale-radius);
+    const gradient=c.createRadialGradient(railX-radius*.4,cy-radius*.5,2,railX,cy,radius);gradient.addColorStop(0,'#ffc37b');gradient.addColorStop(1,'#dc692e');
+    c.fillStyle=gradient;c.beginPath();c.arc(railX,cy,radius,0,2*Math.PI);c.fill();c.strokeStyle='#ba4b23';c.stroke();
+    c.strokeStyle='#dc692e';c.fillStyle='#dc692e';c.lineWidth=2;c.beginPath();c.moveTo(railX+radius+9,cy);c.lineTo(railX+radius+9,cy+Math.min(60,9+v*7));c.stroke();c.beginPath();c.moveTo(railX+radius+4,cy+Math.min(60,9+v*7)-7);c.lineTo(railX+radius+9,cy+Math.min(60,9+v*7));c.lineTo(railX+radius+14,cy+Math.min(60,9+v*7)-7);c.stroke();
+    $('liveT').textContent=fmt(anim.time,3)+' s';$('liveV').textContent=fmt(v,2)+' m/s';$('liveY').textContent=fmt(pos,3)+' m';
+  }
+  function startAnimation(reset=false){
+    try{validate(settings());if(reset)anim.time=0;anim.running=true;anim.last=0;$('play').textContent='⏸ Pausar queda';requestAnimationFrame(tick);}catch(err){setMsg(err.message,true);}
+  }
+  function tick(ts){
+    if(!anim.running)return;
+    if(!anim.last)anim.last=ts;const dt=Math.min(.05,(ts-anim.last)/1000);anim.last=ts;anim.time+=dt*.27;
+    const p=physics(settings());if(p.pos(anim.time)>=GROUND){anim.time=p.when(GROUND);anim.running=false;$('play').textContent='▶ Repetir queda';}
+    drawScene();if(anim.running)requestAnimationFrame(tick);
+  }
+  function graphValues(type){
+    if(type==='vt')return {points:records.flatMap(r=>[{x:r.t1,y:r.v1},{x:r.t2,y:r.v2}]),xlab:'t (s)',ylab:'v (m/s)', title:'Velocidade em função do tempo'};
+    return {points:records.map(r=>({x:r.m*1000,y:r.a})),xlab:'m (g)',ylab:'a (m/s²)',title:'Aceleração em função da massa'};
+  }
+  function graphSpec(type){
+    const data=graphValues(type),p=data.points;
+    if(!p.length)return {...data,empty:true};
+    const xv=p.map(q=>q.x),yv=p.map(q=>q.y);
+    let minx=Math.min(...xv),maxx=Math.max(...xv),miny=Math.min(...yv),maxy=Math.max(...yv);
+    const dx=maxx-minx||Math.max(.1,Math.abs(maxx)*.12),dy=maxy-miny||Math.max(1,Math.abs(maxy)*.12);
+    minx=Math.max(0,minx-dx*.17);maxx=maxx+dx*.17;
+    miny=Math.min(0,miny-dy*.20);maxy=maxy+dy*.22;
+    if(maxy<=miny){miny-=1;maxy+=1;}
+    return {...data,minx,maxx,miny,maxy};
+  }
+  function drawGraph(){
+    $('graphVT').className=mode==='vt'?'primary':'';$('graphAM').className=mode==='am'?'primary':'';
+    const {ctx:c,w,h}=setupCanvas($('plot')),sp=graphSpec(mode),left=66,right=24,top=47,bottom=54,W=w-left-right,H=h-top-bottom;
+    c.fillStyle='#1c354d';c.textAlign='center';c.font='bold 15px system-ui';c.fillText(sp.title,w/2,23);
+    if(sp.empty){c.fillStyle='#8291a4';c.font='14px system-ui';c.fillText('Registe medições para visualizar os resultados.',w/2,h/2);$('graphInfo').textContent='Sem dados para analisar.';return;}
+    const X=x=>left+(x-sp.minx)/(sp.maxx-sp.minx)*W,Y=y=>top+H-(y-sp.miny)/(sp.maxy-sp.miny)*H;
+    c.font='11px system-ui';c.textAlign='right';c.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const yy=top+i*H/5,xx=left+i*W/5;
+      c.strokeStyle='#e3edf6';c.beginPath();c.moveTo(left,yy);c.lineTo(left+W,yy);c.moveTo(xx,top);c.lineTo(xx,top+H);c.stroke();
+      c.fillStyle='#597086';c.fillText(fmt(sp.maxy-(sp.maxy-sp.miny)*i/5,2),left-9,yy+4);c.textAlign='center';c.fillText(fmt(sp.minx+(sp.maxx-sp.minx)*i/5,2),xx,top+H+18);c.textAlign='right';
+    }
+    c.strokeStyle='#738fa8';c.lineWidth=1.5;c.strokeRect(left,top,W,H);
+    if(mode==='vt' && records.length){
+      const st=stats();if(finite(st.slope)){
+        c.strokeStyle='#e18436';c.lineWidth=2.2;c.beginPath();c.moveTo(X(sp.minx),Y(st.slope*sp.minx+st.intercept));c.lineTo(X(sp.maxx),Y(st.slope*sp.maxx+st.intercept));c.stroke();
+        $('graphInfo').textContent='Ajuste linear global: v = '+fmt(st.slope,3)+' t '+(st.intercept<0?'− ':'+ ')+fmt(Math.abs(st.intercept),3)+' (SI). O declive estima a aceleração apenas se ela for aproximadamente constante e os ensaios forem comparáveis.';
+      }
+    }else $('graphInfo').textContent='Compare a aceleração medida para diferentes massas e com o valor de referência.';
+    c.fillStyle='#1762a7';for(const p of sp.points){const yy=Y(p.y);if(!finite(yy))continue;c.beginPath();c.arc(X(p.x),Math.max(top,Math.min(top+H,yy)),4,0,Math.PI*2);c.fill();}
+    c.fillStyle='#314e67';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(sp.xlab,left+W/2,h-10);c.save();c.translate(18,top+H/2);c.rotate(-Math.PI/2);c.fillText(sp.ylab,0,0);c.restore();
+  }
+  // Gerador mínimo de PDF vetorial com fonte padrão Helvetica: autónomo, sem CDNs e sem window.print().
+  const CP1252={8364:128,8218:130,402:131,8222:132,8230:133,8224:134,8225:135,710:136,8240:137,352:138,8249:139,338:140,381:142,8216:145,8217:146,8220:147,8221:148,8226:149,8211:150,8212:151,732:152,8482:153,353:154,8250:155,339:156,382:158,376:159};
+  function ansi(s){return String(s).replace(/\r/g,'').replace(/[\u0394\u03B4]/g,'D').replace(/[\u03C4]/g,'t').replace(/[\u2212]/g,'-').replace(/[\u2192]/g,'->').replace(/[\u2080-\u2089]/g,ch=>String(ch.charCodeAt(0)-8320)).replace(/[\u2070-\u2079]/g,ch=>String(ch.charCodeAt(0)-8304)).replace(/[^\x00-\xFF]/g,ch=>{const cp=ch.charCodeAt(0);return CP1252[cp]!==undefined?String.fromCharCode(CP1252[cp]):'?';});}
+  const esc=s=>ansi(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,' ');
+  class MiniPDF{
+    constructor(){this.pages=[];this.p=0;this.H=842;this.W=595;this.newPage();}
+    newPage(){this.pages.push([]);this.p=this.pages.length-1;}
+    cmd(s){this.pages[this.p].push(s);}
+    rgb(color){return color.map(x=>(x/255).toFixed(3)).join(' ');}
+    line(x1,y1,x2,y2,col=[150,172,193],width=1){this.cmd(this.rgb(col)+' RG '+width+' w '+x1.toFixed(2)+' '+(this.H-y1).toFixed(2)+' m '+x2.toFixed(2)+' '+(this.H-y2).toFixed(2)+' l S\n');}
+    rect(x,y,w,h,fill=[248,251,255]){this.cmd(this.rgb(fill)+' rg '+x.toFixed(2)+' '+(this.H-y-h).toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re f\n');}
+    circle(x,y,r,color=[22,99,175]){const k=.5522848*r,Y=this.H-y;this.cmd(this.rgb(color)+' rg '+(x+r)+' '+Y+' m '+(x+r)+' '+(Y+k)+' '+(x+k)+' '+(Y+r)+' '+x+' '+(Y+r)+' c '+(x-k)+' '+(Y+r)+' '+(x-r)+' '+(Y+k)+' '+(x-r)+' '+Y+' c '+(x-r)+' '+(Y-k)+' '+(x-k)+' '+(Y-r)+' '+x+' '+(Y-r)+' c '+(x+k)+' '+(Y-r)+' '+(x+r)+' '+(Y-k)+' '+(x+r)+' '+Y+' c f\n');}
+    text(s,x,y,size=10,bold=false,color=[30,52,73]){this.cmd('BT '+this.rgb(color)+' rg /'+(bold?'F2':'F1')+' '+size+' Tf 1 0 0 1 '+x.toFixed(2)+' '+(this.H-y).toFixed(2)+' Tm ('+esc(s)+') Tj ET\n');}
+    compile(){
+      const N=this.pages.length,fonts=3+2*N,objects=new Array(fonts+1).fill('');
+      objects[1]='<< /Type /Catalog /Pages 2 0 R >>';
+      objects[2]='<< /Type /Pages /Kids ['+this.pages.map((_,i)=>(3+i*2)+' 0 R').join(' ')+'] /Count '+N+' >>';
+      this.pages.forEach((commands,i)=>{const p=3+i*2,c=p+1,stream=commands.join('');objects[p]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+fonts+' 0 R /F2 '+(fonts+1)+' 0 R >> >> /Contents '+c+' 0 R >>';objects[c]='<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream';});
+      objects[fonts]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+      objects[fonts+1]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+      let out='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offsets=[0];
+      for(let i=1;i<objects.length;i++){offsets[i]=out.length;out+=i+' 0 obj\n'+objects[i]+'\nendobj\n';}
+      const xref=out.length;out+='xref\n0 '+objects.length+'\n0000000000 65535 f \n';
+      for(let i=1;i<objects.length;i++)out+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+      out+='trailer\n<< /Size '+objects.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+      const bytes=new Uint8Array(out.length);for(let i=0;i<out.length;i++)bytes[i]=out.charCodeAt(i)&255;
+      return new Blob([bytes],{type:'application/pdf'});
+    }
+  }
+  function createPDF(){
+    const pdf=new MiniPDF();let y=72;const margin=44,maxW=pdf.W-2*margin;
+    const header=()=>{pdf.rect(0,0,595,47,[21,62,104]);pdf.text('EUFISICA  |  SIMULATIONS',44,29,12,true,[255,255,255]);pdf.text('AL 1.1  -  11.º ano',426,29,10,false,[255,255,255]);pdf.line(44,807,551,807,[214,225,237]);};
+    header();
+    const ensure=(h=18)=>{if(y+h>794){pdf.newPage();header();y=67;}};
+    const heading=s=>{ensure(55);pdf.text(s,44,y,13,true,[16,81,139]);y+=20;};
+    const plain=(s,size=10,bold=false)=>{ensure(size+8);pdf.text(s,44,y,size,bold);y+=size+6;};
+    // Quebra o texto em linhas visuais sem bibliotecas externas.
+    const paragraph=(source,size=10)=>{
+      const parts=String(source||'Não preenchido.').split(/\n/);
+      const cap=Math.max(35,Math.floor(maxW/(size*.54)));
+      for(const part of parts){
+        const words=(part.trim()||' ').split(/\s+/),lines=[];let line='';
+        for(const w of words){if((line+' '+w).trim().length>cap && line){lines.push(line);line=w;}else line=(line+' '+w).trim();}
+        lines.push(line||' ');
+        for(const ln of lines){ensure(size+7);pdf.text(ln,44,y,size);y+=size+5;}
+      }
+      y+=5;
+    };
+    const table=(heads,rows,widths)=>{
+      const rowh=19,startX=44;
+      const row=(cells,isHeader,index)=>{
+        ensure(rowh+1);if(isHeader||index%2===1)pdf.rect(startX,y-12,maxW,rowh,isHeader?[228,239,249]:[245,249,252]);
+        let x=startX+5;for(let i=0;i<cells.length;i++){pdf.text(String(cells[i]),x,y+1,isHeader?7.6:7.5,isHeader);x+=widths[i];}y+=rowh;
+      };
+      row(heads,true,0);rows.forEach((r,i)=>{if(y+rowh>794){pdf.newPage();header();y=69;row(heads,true,0);}row(r,false,i);});y+=12;
+    };
+    const chart=type=>{
+      const sp=graphSpec(type);const outerH=249;ensure(outerH+25);
+      const x0=84,y0=y+19,w=421,h=171;
+      pdf.text(sp.title,44,y,11,true);y+=19;
+      if(sp.empty){pdf.text('Sem dados experimentais.',44,y+35,10);y+=55;return;}
+      const XX=x=>x0+(x-sp.minx)/(sp.maxx-sp.minx)*w,YY=v=>y0+h-(v-sp.miny)/(sp.maxy-sp.miny)*h;
+      for(let i=0;i<=4;i++){
+        const xx=x0+i*w/4,yy=y0+i*h/4;pdf.line(x0,yy,x0+w,yy,[224,233,243],.6);pdf.line(xx,y0,xx,y0+h,[224,233,243],.6);
+        pdf.text(fmt(sp.miny+(sp.maxy-sp.miny)*(4-i)/4,2),49,yy+3,8);
+        pdf.text(fmt(sp.minx+(sp.maxx-sp.minx)*i/4,2),xx-9,y0+h+14,8);
+      }
+      pdf.line(x0,y0+h,x0+w,y0+h,[55,86,109]);pdf.line(x0,y0,x0,y0+h,[55,86,109]);
+      if(type==='vt'){const st=stats();if(st&&finite(st.slope))pdf.line(XX(sp.minx),YY(st.slope*sp.minx+st.intercept),XX(sp.maxx),YY(st.slope*sp.maxx+st.intercept),[222,116,38],1.8);}
+      sp.points.forEach(p=>{const yy=YY(p.y);if(finite(yy)&&yy>=y0-1&&yy<=y0+h+1)pdf.circle(XX(p.x),yy,3,[22,99,175]);});
+      pdf.text(sp.xlab,x0+w/2-10,y0+h+30,9,true);pdf.text(sp.ylab,x0,y0-8,9,true);y+=outerH;
+    };
+    heading('Relatório experimental  -  Queda livre');
+    plain('Física e Química A  |  11.º ano  |  EUFISICA  |  Prof. José Gonçalves',9);
+    paragraph('Aluno(s): '+($('student').value||'—')+'    Turma/grupo: '+($('schoolClass').value||'—'));
+    paragraph('Escola: '+($('school').value||'—')+'    Data: '+($('experimentDate').value||'—'));
+    heading('Fundamentação');
+    paragraph('Em queda livre ideal, Fg = m g e, pela segunda lei de Newton, a = g. O feixe de cada célula fotoelétrica fica bloqueado durante um intervalo de tempo; o quociente L/Delta t fornece a velocidade média nesse intervalo, igual à velocidade instantânea no seu instante médio para aceleração constante.');
+    paragraph('v1 = L / Delta t1; v2 = L / Delta t2; a = (v2 - v1)/(t2 - t1). Erro relativo percentual = 100 x |a - gref| / gref.');
+    heading('Identificação do problema e hipótese');paragraph($('question').value);paragraph('Hipóteses / previsões: '+($('hypothesis').value||'Não preenchido.'));
+    heading('Procedimento experimental');paragraph($('procedure').value);
+    heading('Resultados experimentais');
+    if(!records.length) paragraph('Ainda não foram guardados ensaios.');
+    else{
+      const rawWidths=[29,54,75,75,75,75,75];
+      paragraph('Registos brutos: instantes de entrada (te) e saída (ts) de cada célula.');
+      table(['N','m(g)','te1(s)','ts1(s)','te2(s)','ts2(s)','L(cm)'],records.map((r,i)=>[i+1,fmt(r.m*1000,0),fmt(r.e1,5),fmt(r.x1,5),fmt(r.e2,5),fmt(r.x2,5),fmt(r.L*100,1)]),rawWidths);
+      paragraph('Grandezas calculadas a partir das medições:');
+      const widths=[26,50,53,53,63,57,57,57,58];
+      const rows=records.map((r,i)=>[i+1,fmt(r.m*1000,0),fmt(r.d1*1000,2),fmt(r.d2*1000,2),fmt(r.t2-r.t1,5),fmt(r.v1,3),fmt(r.v2,3),fmt(r.a,3),fmt(r.error,2)]);
+      table(['N','m (g)','dt1(ms)','dt2(ms)','t2-t1(s)','v1(m/s)','v2(m/s)','a(m/s2)','Erro(%)'],rows,widths);
+      const st=stats();paragraph('n = '+records.length+'; aceleração média = '+fmt(st.avg,3)+' m/s2; desvio padrão amostral = '+(st.sd===null?'não aplicável':fmt(st.sd,3)+' m/s2')+'; erro relativo da média = '+fmt(st.error,2)+'% (gref = '+fmt(st.ref,2)+' m/s2).');
+      paragraph('Nota: os valores apresentados são arredondados para leitura. Os cálculos utilizam os instantes numéricos registados.');
+      const hasAir=records.some(r=>r.air),hasReal=records.some(r=>r.source==='Experimental');
+      if(hasAir)paragraph('Inclui ensaios com resistência do ar; a aceleração pode diminuir com o aumento da velocidade e diferir entre massas.');
+      if(hasReal)paragraph('Inclui ensaios introduzidos a partir de medições reais.');
+      ensure(302);heading('Gráficos experimentais');chart('vt');chart('am');
+      if(st&&finite(st.slope))paragraph('Declive do ajuste linear global de v(t): '+fmt(st.slope,3)+' m/s2. É uma estimativa descritiva quando os ensaios são comparáveis e a aceleração é aproximadamente constante.');
+    }
+    heading('Tratamento de dados e interpretação');paragraph($('analysis').value);
+    heading('Incertezas, erros e limitações');paragraph($('limitations').value);
+    heading('Conclusão');paragraph($('conclusion').value);
+    heading('Melhorias e investigações futuras');paragraph($('improvements').value);
+    heading('Fontes e enquadramento');paragraph('Direção-Geral da Educação. Aprendizagens Essenciais: Física e Química A, 11.º ano. Atividade Laboratorial 1.1 - Queda livre: força gravítica e aceleração da gravidade.');
+    const count=pdf.pages.length;for(let i=0;i<count;i++){const previous=pdf.p;pdf.p=i;pdf.text('EUFISICA  -  Prof. José Gonçalves  |  Página '+(i+1)+'/'+count,44,826,8,false,[103,117,130]);pdf.p=previous;}
+    return pdf.compile();
+  }
+  function handlePDF(open){
+    try{
+      const blob=createPDF();
+      if(open){
+        const url=URL.createObjectURL(blob);
+        const w=window.open(url,'_blank','noopener,noreferrer');
+        if(!w){download(blob,fileName('pdf'));setMsg('A abertura de separadores foi bloqueada. Foi iniciada a transferência do PDF; abra-o para imprimir.',false,'pdfMessage');}
+        else{setMsg('PDF aberto num novo separador. Utilize o botão Imprimir do visualizador de PDF.',false,'pdfMessage');setTimeout(()=>URL.revokeObjectURL(url),120000);}
+      }else{download(blob,fileName('pdf'));setMsg('PDF gerado. Verifique a pasta de transferências do navegador.',false,'pdfMessage');}
+    }catch(err){setMsg('Não foi possível criar o PDF: '+err.message,true,'pdfMessage');console.error(err);}
+  }
+  $('measure').addEventListener('click',measure);
+  $('addManual').addEventListener('click',addManual);
+  $('play').addEventListener('click',()=>{if(anim.running){anim.running=false;$('play').textContent='▶ Continuar queda';}else startAnimation(anim.time>0&&physics(settings()).pos(anim.time)>=GROUND);});
+  $('resetAnimation').addEventListener('click',()=>{anim={time:0,running:false,last:0};$('play').textContent='▶ Iniciar queda';drawScene();});
+  $('graphVT').addEventListener('click',()=>{mode='vt';drawGraph();});
+  $('graphAM').addEventListener('click',()=>{mode='am';drawGraph();});
+  $('csv').addEventListener('click',exportCSV);
+  $('exportProject').addEventListener('click',exportProject);
+  $('saveProject').addEventListener('click',()=>{exportProject();setMsg('Trabalho guardado também num ficheiro JSON.',false,'pdfMessage');});
+  $('importProject').addEventListener('click',()=>$('fileInput').click());
+  $('fileInput').addEventListener('change',async()=>{try{const f=$('fileInput').files[0];if(!f)return;if(f.size>5e6)throw Error('O ficheiro é demasiado grande.');restore(JSON.parse(await f.text()));setMsg('Projeto restaurado com sucesso.');}catch(e){setMsg('Erro ao abrir o projeto: '+e.message,true);}finally{$('fileInput').value='';}});
+  $('clearData').addEventListener('click',()=>{if(!confirm('Eliminar todas as medições? O texto do relatório será mantido.'))return;records=[];save();refresh();setMsg('Medições eliminadas.');});
+  $('resetAll').addEventListener('click',()=>{if(!confirm('Recomeçar e apagar dados e relatório?'))return;records=[];REPORT.forEach(id=>$(id).value='');$('mass').value='50';$('diameter').value='3';$('gate1').value='0.4';$('gate2').value='1.1';$('resolution').value='0.0001';$('gref').value='9.81';$('air').checked=false;anim={time:0,running:false,last:0};$('play').textContent='▶ Iniciar queda';save();refresh();drawScene();setMsg('Trabalho reiniciado.',false,'pdfMessage');});
+  $('downloadPdf').addEventListener('click',()=>handlePDF(false));
+  $('openPdf').addEventListener('click',()=>handlePDF(true));
+  [...CONFIG,...REPORT].forEach(id=>$(id).addEventListener('input',()=>{save();if(CONFIG.includes(id))drawScene();}));
+  try{const saved=localStorage.getItem(STORAGE);if(saved)restore(JSON.parse(saved));}catch(_){/* Sem armazenamento disponível: a exportação JSON continua funcional. */}
+  if(!$('experimentDate').value)$('experimentDate').value=new Date().toLocaleDateString('en-CA');
+  window.addEventListener('resize',()=>{drawScene();drawGraph();});
+  refresh();drawScene();
+  // Marcador para testes automatizados locais; não interfere com a experiência.
+  window.EUFISICA_AL11={getRecordCount:()=>records.length,createPDF,settings,physics,stats};
+})();
+</script>
+</body>
+</html>
